@@ -1278,18 +1278,20 @@ end
 createMovablePrompt()
 
 local function Hide(notify: boolean?)
-	if MPrompt then
-		MPrompt.Title.TextColor3 = SelectedTheme.TextColor
-		MPrompt.BackgroundColor3 = SelectedTheme.Topbar
-		MPrompt.UIStroke.Color = SelectedTheme.ElementStroke
-		MPrompt.Size = UDim2.new(0, 120, 0, 60) -- 增大尺寸以显示更多文本
-		MPrompt.BackgroundTransparency = 0.3
-		MPrompt.Title.TextTransparency = 0.3
-		MPrompt.Visible = true
-		
-		-- 允许按钮在屏幕范围内移动
-		MPrompt.Active = true
-	end
+    if MPrompt then
+        MPrompt.Title.TextColor3 = SelectedTheme.TextColor
+        MPrompt.BackgroundColor3 = SelectedTheme.Topbar
+        MPrompt.UIStroke.Color = SelectedTheme.ElementStroke
+        MPrompt.Size = UDim2.new(0, 120, 0, 60)
+        MPrompt.BackgroundTransparency = 0.3
+        MPrompt.Title.TextTransparency = 0.3
+        MPrompt.Visible = true
+        
+        -- 设置默认位置（如果之前没有被移动过）
+        if MPrompt.Position == UDim2.new(0.5, 0, 0, -50) or MPrompt.Position == UDim2.new(0, 0, 0, 0) then
+            MPrompt.Position = UDim2.new(0, 20, 0, 20)
+        end
+    end
 
 	task.spawn(closeSearch)
 
@@ -1756,20 +1758,18 @@ function RayfieldLibrary:CreateWindow(Settings)
 		Topbar.Icon.Visible = true
 		Topbar.Title.Position = UDim2.new(0, 47, 0.5, 0)
 
-		if Settings.Icon then
-			if typeof(Settings.Icon) == 'string' and Icons then
-				local asset = getIcon(Settings.Icon)
-
-				Topbar.Icon.Image = 'https://raw.githubusercontent.com/jbu7666gvv/tu/d267405e769158957ab402e8a2ec9a5d019cf78b/hhbg.jpg'..asset.id
-				Topbar.Icon.ImageRectOffset = asset.imageRectOffset
-				Topbar.Icon.ImageRectSize = asset.imageRectSize
-			else
-				Topbar.Icon.Image = getAssetUri(Settings.Icon)
-			end
-		else
-			Topbar.Icon.Image = "https://raw.githubusercontent.com/jbu7666gvv/tu/d267405e769158957ab402e8a2ec9a5d019cf78b/hhbg.jpg" .. 0
-		end
-	end
+-- 如果确实要使用那个背景图片作为图标
+if Settings.Icon then
+    if typeof(Settings.Icon) == 'string' and Icons then
+        local asset = getIcon(Settings.Icon)
+        Topbar.Icon.Image = 'rbxassetid://'..asset.id
+        Topbar.Icon.ImageRectOffset = asset.imageRectOffset
+        Topbar.Icon.ImageRectSize = asset.imageRectSize
+    else
+        -- 直接使用完整的图片URL，不拼接asset.id
+        Topbar.Icon.Image = 'https://raw.githubusercontent.com/jbu7666gvv/tu/d267405e769158957ab402e8a2ec9a5d019cf78b/hhbg.jpg'
+    end
+end
 
 	if dragBar then
 		dragBar.Visible = false
