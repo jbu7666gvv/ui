@@ -771,6 +771,17 @@ local function ChangeTheme(Theme)
 		Main.Notice.BackgroundColor3 = SelectedTheme.Background
 	end
 
+	-- 更新提示按钮样式
+	if MPrompt then
+		MPrompt.BackgroundColor3 = SelectedTheme.Topbar
+		MPrompt.UIStroke.Color = SelectedTheme.ElementStroke
+		MPrompt.Title.TextColor3 = SelectedTheme.TextColor
+		
+		if MPrompt:FindFirstChild("DragIndicator") then
+			MPrompt.DragIndicator.ImageColor3 = SelectedTheme.TextColor
+		end
+	end
+
 	for _, text in ipairs(Rayfield:GetDescendants()) do
 		if text.Parent.Parent ~= Notifications then
 			if text:IsA('TextLabel') or text:IsA('TextBox') then text.TextColor3 = SelectedTheme.TextColor end
@@ -1159,14 +1170,70 @@ local function closeSearch()
 	Main.Search.Input.Interactable = false
 end
 
+-- 边界检查函数
+local function ensurePromptInBounds()
+    if not MPrompt or not MPrompt.Visible then return end
+    
+    local screenSize = Rayfield.AbsoluteSize
+    local promptPos = MPrompt.AbsolutePosition
+    local promptSize = MPrompt.AbsoluteSize
+    
+    -- 检查是否超出边界
+    local newX = math.clamp(promptPos.X, 0, screenSize.X - promptSize.X)
+    local newY = math.clamp(promptPos.Y, 0, screenSize.Y - promptSize.Y)
+    
+    -- 如果位置需要调整，则移动到边界内
+    if newX ~= promptPos.X or newY ~= promptPos.Y then
+        MPrompt.Position = UDim2.new(0, newX, 0, newY)
+    end
+end
+
+-- 创建可拖动的提示按钮
+local function createMovablePrompt()
+    if MPrompt then
+        -- 使提示按钮可拖动
+        makeDraggable(MPrompt, MPrompt.Interact, false, {0, 0})
+        
+        -- 添加拖动指示器
+        local dragIndicator = Instance.new("ImageLabel")
+        dragIndicator.Name = "DragIndicator"
+        dragIndicator.Image = "rbxassetid://10137941941" -- 拖动图标
+        dragIndicator.ImageColor3 = SelectedTheme.TextColor
+        dragIndicator.BackgroundTransparency = 1
+        dragIndicator.Size = UDim2.new(0, 16, 0, 16)
+        dragIndicator.Position = UDim2.new(1, -20, 0, 5)
+        dragIndicator.Parent = MPrompt
+        
+        -- 设置提示文本
+        MPrompt.Title.Text = "拖动移动\n点击打开"
+        MPrompt.Title.TextWrapped = true
+        MPrompt.Title.Size = UDim2.new(1, -10, 1, -10)
+        MPrompt.Title.Position = UDim2.new(0, 5, 0, 5)
+        
+        -- 在拖动结束时检查边界
+        MPrompt.Interact.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                ensurePromptInBounds()
+            end
+        end)
+    end
+end
+
+-- 在界面初始化后调用
+createMovablePrompt()
+
 local function Hide(notify: boolean?)
 	if MPrompt then
-		MPrompt.Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-		MPrompt.Position = UDim2.new(0.5, 0, 0, -50)
-		MPrompt.Size = UDim2.new(0, 40, 0, 10)
-		MPrompt.BackgroundTransparency = 1
-		MPrompt.Title.TextTransparency = 1
+		MPrompt.Title.TextColor3 = SelectedTheme.TextColor
+		MPrompt.BackgroundColor3 = SelectedTheme.Topbar
+		MPrompt.UIStroke.Color = SelectedTheme.ElementStroke
+		MPrompt.Size = UDim2.new(0, 120, 0, 60) -- 增大尺寸以显示更多文本
+		MPrompt.BackgroundTransparency = 0.3
+		MPrompt.Title.TextTransparency = 0.3
 		MPrompt.Visible = true
+		
+		-- 允许按钮在屏幕范围内移动
+		MPrompt.Active = true
 	end
 
 	task.spawn(closeSearch)
@@ -1192,8 +1259,15 @@ local function Hide(notify: boolean?)
 	TweenService:Create(dragBarCosmetic, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 
 	if useMobilePrompt and MPrompt then
-		TweenService:Create(MPrompt, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = UDim2.new(0, 120, 0, 30), Position = UDim2.new(0.5, 0, 0, 20), BackgroundTransparency = 0.3}):Play()
-		TweenService:Create(MPrompt.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0.3}):Play()
+		-- 移除位置限制，让按钮可以自由定位
+		MPrompt.Position = UDim2.new(0, 20, 0, 20) -- 默认位置，但用户可以移动
+		TweenService:Create(MPrompt, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
+			Size = UDim2.new(0, 120, 0, 60), 
+			BackgroundTransparency = 0.3
+		}):Play()
+		TweenService:Create(MPrompt.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
+			TextTransparency = 0.3
+		}):Play()
 	end
 
 	for _, TopbarButton in ipairs(Topbar:GetChildren()) do
@@ -1322,8 +1396,13 @@ local function Unhide()
 	TweenService:Create(Main.Topbar.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
 
 	if MPrompt then
-		TweenService:Create(MPrompt, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = UDim2.new(0, 40, 0, 10), Position = UDim2.new(0.5, 0, 0, -50), BackgroundTransparency = 1}):Play()
-		TweenService:Create(MPrompt.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+		TweenService:Create(MPrompt, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
+			Size = UDim2.new(0, 120, 0, 60), 
+			BackgroundTransparency = 1
+		}):Play()
+		TweenService:Create(MPrompt.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
+			TextTransparency = 1
+		}):Play()
 
 		task.spawn(function()
 			task.wait(0.5)
@@ -1607,15 +1686,15 @@ function RayfieldLibrary:CreateWindow(Settings)
 	LoadingFrame.Subtitle.TextTransparency = 1
 
 	if Settings.ShowText then
-		MPrompt.Title.Text = 'Show '..Settings.ShowText
+		MPrompt.Title.Text = '关闭'..Settings.ShowText
 	end
 
 	LoadingFrame.Version.TextTransparency = 1
 	LoadingFrame.Title.Text = Settings.LoadingTitle or "Rayfield"
 	LoadingFrame.Subtitle.Text = Settings.LoadingSubtitle or "Interface Suite"
 
-	if Settings.LoadingTitle ~= "Rayfield Interface Suite" then
-		LoadingFrame.Version.Text = "Rayfield UI"
+	if Settings.LoadingTitle ~= "ui接口套件" then
+		LoadingFrame.Version.Text = "本熊ui"
 	end
 
 	if Settings.Icon and Settings.Icon ~= 0 and Topbar:FindFirstChild('Icon') then
@@ -3982,4 +4061,3 @@ task.delay(4, function()
 end)
 
 return RayfieldLibrary
-
