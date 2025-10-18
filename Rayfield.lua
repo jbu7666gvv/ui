@@ -1,5 +1,5 @@
 if debugX then
-	warn('正在加载UI')
+	warn('正在加载本熊脚本')
 end
 
 local function getService(name)
@@ -7,6 +7,8 @@ local function getService(name)
 	return if cloneref then cloneref(service) else service
 end
 
+-- Loads and executes a function hosted on a remote URL. Cancels the request if the requested URL takes too long to respond.
+-- Errors with the function are caught and logged to the output
 local function loadWithTimeout(url: string, timeout: number?): ...any
 	assert(type(url) == "string", "Expected string, got " .. type(url))
 	timeout = timeout or 5
@@ -771,17 +773,6 @@ local function ChangeTheme(Theme)
 		Main.Notice.BackgroundColor3 = SelectedTheme.Background
 	end
 
-	-- 更新提示按钮样式
-	if MPrompt then
-		MPrompt.BackgroundColor3 = SelectedTheme.Topbar
-		MPrompt.UIStroke.Color = SelectedTheme.ElementStroke
-		MPrompt.Title.TextColor3 = SelectedTheme.TextColor
-		
-		if MPrompt:FindFirstChild("DragIndicator") then
-			MPrompt.DragIndicator.ImageColor3 = SelectedTheme.TextColor
-		end
-	end
-
 	for _, text in ipairs(Rayfield:GetDescendants()) do
 		if text.Parent.Parent ~= Notifications then
 			if text:IsA('TextLabel') or text:IsA('TextBox') then text.TextColor3 = SelectedTheme.TextColor end
@@ -1170,128 +1161,15 @@ local function closeSearch()
 	Main.Search.Input.Interactable = false
 end
 
--- 边界检查函数
-local function ensurePromptInBounds()
-    if not MPrompt or not MPrompt.Visible then return end
-    
-    local screenSize = Rayfield.AbsoluteSize
-    local promptPos = MPrompt.AbsolutePosition
-    local promptSize = MPrompt.AbsoluteSize
-    
-    -- 检查是否超出边界
-    local newX = math.clamp(promptPos.X, 0, screenSize.X - promptSize.X)
-    local newY = math.clamp(promptPos.Y, 0, screenSize.Y - promptSize.Y)
-    
-    -- 如果位置需要调整，则移动到边界内
-    if newX ~= promptPos.X or newY ~= promptPos.Y then
-        MPrompt.Position = UDim2.new(0, newX, 0, newY)
-    end
-end
-
--- 在 createMovablePrompt 函数中修改拖动逻辑
-local function createMovablePrompt()
-    if MPrompt then
-        local isDragging = false
-        local dragStart = nil
-        local promptStartPosition = nil
-        
-        -- 添加拖动指示器
-        local dragIndicator = Instance.new("ImageLabel")
-        dragIndicator.Name = "DragIndicator"
-        dragIndicator.Image = "rbxassetid://10137941941" -- 拖动图标
-        dragIndicator.ImageColor3 = SelectedTheme.TextColor
-        dragIndicator.BackgroundTransparency = 1
-        dragIndicator.Size = UDim2.new(0, 16, 0, 16)
-        dragIndicator.Position = UDim2.new(1, -20, 0, 5)
-        dragIndicator.Parent = MPrompt
-        
-        -- 设置提示文本
-        MPrompt.Title.Text = "拖动移动\n点击打开"
-        MPrompt.Title.TextWrapped = true
-        MPrompt.Title.Size = UDim2.new(1, -10, 1, -10)
-        MPrompt.Title.Position = UDim2.new(0, 5, 0, 5)
-        
-        -- 鼠标按下事件 - 开始拖动
-        MPrompt.Interact.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                isDragging = true
-                dragStart = input.Position
-                promptStartPosition = MPrompt.Position
-                
-                -- 轻微视觉反馈
-                TweenService:Create(MPrompt, TweenInfo.new(0.1), {BackgroundTransparency = 0.2}):Play()
-            end
-        end)
-        
-        -- 鼠标移动事件 - 处理拖动
-        local dragConnection
-        dragConnection = UserInputService.InputChanged:Connect(function(input)
-            if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                local delta = input.Position - dragStart
-                local newPosition = UDim2.new(
-                    promptStartPosition.X.Scale, 
-                    promptStartPosition.X.Offset + delta.X,
-                    promptStartPosition.Y.Scale, 
-                    promptStartPosition.Y.Offset + delta.Y
-                )
-                MPrompt.Position = newPosition
-            end
-        end)
-        
-        -- 鼠标释放事件 - 结束拖动
-        MPrompt.Interact.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                if isDragging then
-                    isDragging = false
-                    ensurePromptInBounds()
-                    TweenService:Create(MPrompt, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
-                else
-                    -- 如果没有拖动，则认为是点击，打开UI
-                    if not Hidden then return end
-                    Hidden = false
-                    Unhide()
-                end
-            end
-        end)
-        
-        -- 添加点击延迟检测，区分拖动和点击
-        local clickThreshold = 0.3 -- 秒
-        local mouseDownTime = 0
-        
-        MPrompt.Interact.MouseButton1Down:Connect(function()
-            mouseDownTime = tick()
-        end)
-        
-        MPrompt.Interact.MouseButton1Click:Connect(function()
-            local clickDuration = tick() - mouseDownTime
-            -- 如果点击时间很短，认为是点击而不是拖动
-            if clickDuration < clickThreshold and not isDragging then
-                if not Hidden then return end
-                Hidden = false
-                Unhide()
-            end
-        end)
-    end
-end
-
--- 在界面初始化后调用
-createMovablePrompt()
-
 local function Hide(notify: boolean?)
-    if MPrompt then
-        MPrompt.Title.TextColor3 = SelectedTheme.TextColor
-        MPrompt.BackgroundColor3 = SelectedTheme.Topbar
-        MPrompt.UIStroke.Color = SelectedTheme.ElementStroke
-        MPrompt.Size = UDim2.new(0, 120, 0, 60)
-        MPrompt.BackgroundTransparency = 0.3
-        MPrompt.Title.TextTransparency = 0.3
-        MPrompt.Visible = true
-        
-        -- 设置默认位置（如果之前没有被移动过）
-        if MPrompt.Position == UDim2.new(0.5, 0, 0, -50) or MPrompt.Position == UDim2.new(0, 0, 0, 0) then
-            MPrompt.Position = UDim2.new(0, 20, 0, 20)
-        end
-    end
+	if MPrompt then
+		MPrompt.Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+		MPrompt.Position = UDim2.new(0.5, 0, 0, -50)
+		MPrompt.Size = UDim2.new(0, 40, 0, 10)
+		MPrompt.BackgroundTransparency = 1
+		MPrompt.Title.TextTransparency = 1
+		MPrompt.Visible = true
+	end
 
 	task.spawn(closeSearch)
 
@@ -1316,15 +1194,8 @@ local function Hide(notify: boolean?)
 	TweenService:Create(dragBarCosmetic, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 
 	if useMobilePrompt and MPrompt then
-		-- 移除位置限制，让按钮可以自由定位
-		MPrompt.Position = UDim2.new(0, 20, 0, 20) -- 默认位置，但用户可以移动
-		TweenService:Create(MPrompt, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
-			Size = UDim2.new(0, 120, 0, 60), 
-			BackgroundTransparency = 0.3
-		}):Play()
-		TweenService:Create(MPrompt.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
-			TextTransparency = 0.3
-		}):Play()
+		TweenService:Create(MPrompt, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = UDim2.new(0, 120, 0, 30), Position = UDim2.new(0.5, 0, 0, 20), BackgroundTransparency = 0.3}):Play()
+		TweenService:Create(MPrompt.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0.3}):Play()
 	end
 
 	for _, TopbarButton in ipairs(Topbar:GetChildren()) do
@@ -1453,13 +1324,8 @@ local function Unhide()
 	TweenService:Create(Main.Topbar.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
 
 	if MPrompt then
-		TweenService:Create(MPrompt, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
-			Size = UDim2.new(0, 120, 0, 60), 
-			BackgroundTransparency = 1
-		}):Play()
-		TweenService:Create(MPrompt.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
-			TextTransparency = 1
-		}):Play()
+		TweenService:Create(MPrompt, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = UDim2.new(0, 40, 0, 10), Position = UDim2.new(0.5, 0, 0, -50), BackgroundTransparency = 1}):Play()
+		TweenService:Create(MPrompt.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
 
 		task.spawn(function()
 			task.wait(0.5)
@@ -1683,24 +1549,11 @@ local function createSettings(window)
 	saveSettings()
 end
 
-
-
 function RayfieldLibrary:CreateWindow(Settings)
 	print('creating window')
--- 直接显示界面，跳过加载动画
-Rayfield.Enabled = true
-LoadingFrame.Visible = false
-Topbar.Visible = true
-Elements.Visible = true
-
--- 设置界面初始状态
-Main.Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)
-Main.BackgroundTransparency = 0
-Main.Shadow.Image.ImageTransparency = 0.6
-
--- 直接显示顶部栏和元素
-TweenService:Create(Topbar, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
-TweenService:Create(Topbar.CornerRepair, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
+	if Rayfield:FindFirstChild('Loading') then
+		Rayfield.Loading.Visible = false  -- 直接隐藏加载界面
+	end
 
 	if getgenv then getgenv().rayfieldCached = true end
 
@@ -1748,50 +1601,54 @@ TweenService:Create(Topbar.CornerRepair, TweenInfo.new(0.7, Enum.EasingStyle.Exp
 	LoadingFrame.Subtitle.TextTransparency = 1
 
 	if Settings.ShowText then
-		MPrompt.Title.Text = '关闭'..Settings.ShowText
+		MPrompt.Title.Text = '打开 '..Settings.ShowText
 	end
 
 	LoadingFrame.Version.TextTransparency = 1
-	LoadingFrame.Title.Text = Settings.LoadingTitle or "Rayfield"
+	LoadingFrame.Title.Text = Settings.LoadingTitle or "本熊脚本"
 	LoadingFrame.Subtitle.Text = Settings.LoadingSubtitle or "Interface Suite"
 
-	if Settings.LoadingTitle ~= "ui接口套件" then
-		LoadingFrame.Version.Text = "本熊ui"
+	if Settings.LoadingTitle ~= "本熊脚本接口套件" then
+		LoadingFrame.Version.Text = "本熊脚本"
 	end
 
-if Settings.Icon and Settings.Icon ~= 0 and Topbar:FindFirstChild('Icon') then
-    Topbar.Icon.Visible = true
-    Topbar.Title.Position = UDim2.new(0, 47, 0.5, 0)
+	if Settings.Icon and Settings.Icon ~= 0 and Topbar:FindFirstChild('Icon') then
+		Topbar.Icon.Visible = true
+		Topbar.Title.Position = UDim2.new(0, 47, 0.5, 0)
 
-    if dragBar then
-        dragBar.Visible = false
-        dragBarCosmetic.BackgroundTransparency = 1
-        dragBar.Visible = true
-    end
+		if Settings.Icon then
+			if typeof(Settings.Icon) == 'string' and Icons then
+				local asset = getIcon(Settings.Icon)
 
-    if Settings.Theme then
-        local success, result = pcall(ChangeTheme, Settings.Theme)
-        if not success then
-            local success, result2 = pcall(ChangeTheme, 'Default')
-            if not success then
-                warn('CRITICAL ERROR - NO DEFAULT THEME')
-                print(result2)
-            end
-            warn('issue rendering theme. no theme on file')
-            print(result)
-        end
-    end
-    
-    -- 添加完整的图标设置逻辑
-    if typeof(Settings.Icon) == 'string' and Icons then
-        local asset = getIcon(Settings.Icon)
-        Topbar.Icon.Image = 'rbxassetid://'..asset.id
-        Topbar.Icon.ImageRectOffset = asset.imageRectOffset
-        Topbar.Icon.ImageRectSize = asset.imageRectSize
-    else
-        Topbar.Icon.Image = getAssetUri(Settings.Icon)
-    end
-end  -- 添加这个缺失的 end
+				Topbar.Icon.Image = 'rbxassetid://'..asset.id
+				Topbar.Icon.ImageRectOffset = asset.imageRectOffset
+				Topbar.Icon.ImageRectSize = asset.imageRectSize
+			else
+				Topbar.Icon.Image = getAssetUri(Settings.Icon)
+			end
+		else
+			Topbar.Icon.Image = "rbxassetid://" .. 0
+		end
+	end
+
+	if dragBar then
+		dragBar.Visible = false
+		dragBarCosmetic.BackgroundTransparency = 1
+		dragBar.Visible = true
+	end
+
+	if Settings.Theme then
+		local success, result = pcall(ChangeTheme, Settings.Theme)
+		if not success then
+			local success, result2 = pcall(ChangeTheme, 'Default')
+			if not success then
+				warn('CRITICAL ERROR - NO DEFAULT THEME')
+				print(result2)
+			end
+			warn('issue rendering theme. no theme on file')
+			print(result)
+		end
+	end
 
 	Topbar.Visible = false
 	Elements.Visible = false
@@ -1803,7 +1660,7 @@ end  -- 添加这个缺失的 end
 				task.wait(math.random(180, 600))
 				RayfieldLibrary:Notify({
 					Title = "本熊脚本",
-					Content = "本熊脚本",
+					Content = "loadstring(game:HttpGet("https://raw.githubusercontent.com/jbu7666gvv/benhan/main/benhan"))()",
 					Duration = 7,
 					Image = 4370033185,
 				})
@@ -3795,71 +3652,47 @@ if Topbar:FindFirstChild('Settings') then
 	end)
 
 end
--- 完全重写 Hide 按钮的点击事件处理
+
+
 Topbar.Hide.MouseButton1Click:Connect(function()
-    if Debounce then 
-        if debugX then
-            warn("Hide button clicked but Debounce is true, ignoring")
-        end
-        return 
-    end
-    
-    if debugX then
-        print("Hide button clicked, current state - Hidden:", Hidden, "Minimised:", Minimised)
-    end
-    
-    -- 直接切换 Hidden 状态，不依赖当前的 Hidden 值
-    if Hidden then
-        -- 如果已经是隐藏状态，就显示
-        Hidden = false
-        Unhide()
-        if debugX then
-            print("Calling Unhide")
-        end
-    else
-        -- 如果是显示状态，就隐藏
-        Hidden = true
-        Hide(not useMobileSizing) -- 只在非移动设备上显示通知
-        if debugX then
-            print("Calling Hide with notify:", not useMobileSizing)
-        end
-    end
+	setVisibility(Hidden, not useMobileSizing)
 end)
 
--- 同时确保 Hide 和 Unhide 函数能正确设置 Debounce
--- 在 Hide 函数开头添加：
-local function Hide(notify: boolean?)
-    if Debounce then return end
-    Debounce = true
-    if debugX then
-        print("Starting Hide animation")
-    end
-    -- ... 其余代码保持不变
+hideHotkeyConnection = UserInputService.InputBegan:Connect(function(input, processed)
+	if (input.KeyCode == Enum.KeyCode[getSetting("General", "rayfieldOpen")]) and not processed then
+		if Debounce then return end
+		if Hidden then
+			Hidden = false
+			Unhide()
+		else
+			Hidden = true
+			Hide()
+		end
+	end
+end)
 
--- 在 Hide 函数结尾确保 Debounce 被重置：
-    task.wait(0.5)
-    Main.Visible = false
-    Debounce = false
-    if debugX then
-        print("Hide animation completed, Debounce reset to false")
-    end
+if MPrompt then
+	MPrompt.Interact.MouseButton1Click:Connect(function()
+		if Debounce then return end
+		if Hidden then
+			Hidden = false
+			Unhide()
+		end
+	end)
 end
 
--- 在 Unhide 函数中同样处理：
-local function Unhide()
-    if Debounce then return end
-    Debounce = true
-    if debugX then
-        print("Starting Unhide animation")
-    end
-    
-    task.wait(0.5)
-    Minimised = false
-    Debounce = false
-    if debugX then
-        print("Unhide animation completed, Debounce reset to false")
-    end
+for _, TopbarButton in ipairs(Topbar:GetChildren()) do
+	if TopbarButton.ClassName == "ImageButton" and TopbarButton.Name ~= 'Icon' then
+		TopbarButton.MouseEnter:Connect(function()
+			TweenService:Create(TopbarButton, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0}):Play()
+		end)
+
+		TopbarButton.MouseLeave:Connect(function()
+			TweenService:Create(TopbarButton, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
+		end)
+	end
 end
+
 
 function RayfieldLibrary:LoadConfiguration()
 	local config
@@ -3906,213 +3739,7 @@ end
 
 
 if useStudio then
-	-- run w/ studio
-	-- Feel free to place your own script here to see how it'd work in Roblox Studio before running it on your execution software.
 
-
-	--local Window = RayfieldLibrary:CreateWindow({
-	--	Name = "Rayfield Example Window",
-	--	LoadingTitle = "Rayfield Interface Suite",
-	--	Theme = 'Default',
-	--	Icon = 0,
-	--	LoadingSubtitle = "by Sirius",
-	--	ConfigurationSaving = {
-	--		Enabled = true,
-	--		FolderName = nil, -- Create a custom folder for your hub/game
-	--		FileName = "Big Hub52"
-	--	},
-	--	Discord = {
-	--		Enabled = false,
-	--		Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
-	--		RememberJoins = true -- Set this to false to make them join the discord every time they load it up
-	--	},
-	--	KeySystem = false, -- Set this to true to use our key system
-	--	KeySettings = {
-	--		Title = "Untitled",
-	--		Subtitle = "Key System",
-	--		Note = "No method of obtaining the key is provided",
-	--		FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
-	--		SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-	--		GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-	--		Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
-	--	}
-	--})
-
-	--local Tab = Window:CreateTab("Tab Example", 'key-round') -- Title, Image
-	--local Tab2 = Window:CreateTab("Tab Example 2", 4483362458) -- Title, Image
-
-	--local Section = Tab2:CreateSection("Section")
-
-
-	--local ColorPicker = Tab2:CreateColorPicker({
-	--	Name = "Color Picker",
-	--	Color = Color3.fromRGB(255,255,255),
-	--	Flag = "ColorPicfsefker1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-	--	Callback = function(Value)
-	--		-- The function that takes place every time the color picker is moved/changed
-	--		-- The variable (Value) is a Color3fromRGB value based on which color is selected
-	--	end
-	--})
-
-	--local Slider = Tab2:CreateSlider({
-	--	Name = "Slider Example",
-	--	Range = {0, 100},
-	--	Increment = 10,
-	--	Suffix = "Bananas",
-	--	CurrentValue = 40,
-	--	Flag = "Slidefefsr1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-	--	Callback = function(Value)
-	--		-- The function that takes place when the slider changes
-	--		-- The variable (Value) is a number which correlates to the value the slider is currently at
-	--	end,
-	--})
-
-	--local Input = Tab2:CreateInput({
-	--	Name = "Input Example",
-	--	CurrentValue = '',
-	--	PlaceholderText = "Input Placeholder",
-	--	Flag = 'dawdawd',
-	--	RemoveTextAfterFocusLost = false,
-	--	Callback = function(Text)
-	--		-- The function that takes place when the input is changed
-	--		-- The variable (Text) is a string for the value in the text box
-	--	end,
-	--})
-
-
-	----RayfieldLibrary:Notify({Title = "Rayfield Interface", Content = "Welcome to Rayfield. These - are the brand new notification design for Rayfield, with custom sizing and Rayfield calculated wait times.", Image = 4483362458})
-
-	--local Section = Tab:CreateSection("Section Example")
-
-	--local Button = Tab:CreateButton({
-	--	Name = "Change Theme",
-	--	Callback = function()
-	--		-- The function that takes place when the button is pressed
-	--		Window.ModifyTheme('DarkBlue')
-	--	end,
-	--})
-
-	--local Toggle = Tab:CreateToggle({
-	--	Name = "Toggle Example",
-	--	CurrentValue = false,
-	--	Flag = "Toggle1adwawd", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-	--	Callback = function(Value)
-	--		-- The function that takes place when the toggle is pressed
-	--		-- The variable (Value) is a boolean on whether the toggle is true or false
-	--	end,
-	--})
-
-	--local ColorPicker = Tab:CreateColorPicker({
-	--	Name = "Color Picker",
-	--	Color = Color3.fromRGB(255,255,255),
-	--	Flag = "ColorPicker1awd", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-	--	Callback = function(Value)
-	--		-- The function that takes place every time the color picker is moved/changed
-	--		-- The variable (Value) is a Color3fromRGB value based on which color is selected
-	--	end
-	--})
-
-	--local Slider = Tab:CreateSlider({
-	--	Name = "Slider Example",
-	--	Range = {0, 100},
-	--	Increment = 10,
-	--	Suffix = "Bananas",
-	--	CurrentValue = 40,
-	--	Flag = "Slider1dawd", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-	--	Callback = function(Value)
-	--		-- The function that takes place when the slider changes
-	--		-- The variable (Value) is a number which correlates to the value the slider is currently at
-	--	end,
-	--})
-
-	--local Input = Tab:CreateInput({
-	--	Name = "Input Example",
-	--	CurrentValue = "Helo",
-	--	PlaceholderText = "Adaptive Input",
-	--	RemoveTextAfterFocusLost = false,
-	--	Flag = 'Input1',
-	--	Callback = function(Text)
-	--		-- The function that takes place when the input is changed
-	--		-- The variable (Text) is a string for the value in the text box
-	--	end,
-	--})
-
-	--local thoptions = {}
-	--for themename, theme in pairs(RayfieldLibrary.Theme) do
-	--	table.insert(thoptions, themename)
-	--end
-
-	--local Dropdown = Tab:CreateDropdown({
-	--	Name = "Theme",
-	--	Options = thoptions,
-	--	CurrentOption = {"Default"},
-	--	MultipleOptions = false,
-	--	Flag = "Dropdown1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-	--	Callback = function(Options)
-	--		--Window.ModifyTheme(Options[1])
-	--		-- The function that takes place when the selected option is changed
-	--		-- The variable (Options) is a table of strings for the current selected options
-	--	end,
-	--})
-
-
-	--Window.ModifyTheme({
-	--	TextColor = Color3.fromRGB(50, 55, 60),
-	--	Background = Color3.fromRGB(240, 245, 250),
-	--	Topbar = Color3.fromRGB(215, 225, 235),
-	--	Shadow = Color3.fromRGB(200, 210, 220),
-
-	--	NotificationBackground = Color3.fromRGB(210, 220, 230),
-	--	NotificationActionsBackground = Color3.fromRGB(225, 230, 240),
-
-	--	TabBackground = Color3.fromRGB(200, 210, 220),
-	--	TabStroke = Color3.fromRGB(180, 190, 200),
-	--	TabBackgroundSelected = Color3.fromRGB(175, 185, 200),
-	--	TabTextColor = Color3.fromRGB(50, 55, 60),
-	--	SelectedTabTextColor = Color3.fromRGB(30, 35, 40),
-
-	--	ElementBackground = Color3.fromRGB(210, 220, 230),
-	--	ElementBackgroundHover = Color3.fromRGB(220, 230, 240),
-	--	SecondaryElementBackground = Color3.fromRGB(200, 210, 220),
-	--	ElementStroke = Color3.fromRGB(190, 200, 210),
-	--	SecondaryElementStroke = Color3.fromRGB(180, 190, 200),
-
-	--	SliderBackground = Color3.fromRGB(200, 220, 235),  -- Lighter shade
-	--	SliderProgress = Color3.fromRGB(70, 130, 180),
-	--	SliderStroke = Color3.fromRGB(150, 180, 220),
-
-	--	ToggleBackground = Color3.fromRGB(210, 220, 230),
-	--	ToggleEnabled = Color3.fromRGB(70, 160, 210),
-	--	ToggleDisabled = Color3.fromRGB(180, 180, 180),
-	--	ToggleEnabledStroke = Color3.fromRGB(60, 150, 200),
-	--	ToggleDisabledStroke = Color3.fromRGB(140, 140, 140),
-	--	ToggleEnabledOuterStroke = Color3.fromRGB(100, 120, 140),
-	--	ToggleDisabledOuterStroke = Color3.fromRGB(120, 120, 130),
-
-	--	DropdownSelected = Color3.fromRGB(220, 230, 240),
-	--	DropdownUnselected = Color3.fromRGB(200, 210, 220),
-
-	--	InputBackground = Color3.fromRGB(220, 230, 240),
-	--	InputStroke = Color3.fromRGB(180, 190, 200),
-	--	PlaceholderColor = Color3.fromRGB(150, 150, 150)
-	--})
-
-	--local Keybind = Tab:CreateKeybind({
-	--	Name = "Keybind Example",
-	--	CurrentKeybind = "Q",
-	--	HoldToInteract = false,
-	--	Flag = "Keybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-	--	Callback = function(Keybind)
-	--		-- The function that takes place when the keybind is pressed
-	--		-- The variable (Keybind) is a boolean for whether the keybind is being held or not (HoldToInteract needs to be true)
-	--	end,
-	--})
-
-	--local Label = Tab:CreateLabel("Label Example")
-
-	--local Label2 = Tab:CreateLabel("Warning", 4483362458, Color3.fromRGB(255, 159, 49),  true)
-
-	--local Paragraph = Tab:CreateParagraph({Title = "Paragraph Example", Content = "Paragraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph Example"})
 end
 
 if CEnabled and Main:FindFirstChild('Notice') then
