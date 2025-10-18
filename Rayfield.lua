@@ -1687,15 +1687,20 @@ end
 
 function RayfieldLibrary:CreateWindow(Settings)
 	print('creating window')
-	if Rayfield:FindFirstChild('Loading') then
-		if getgenv and not getgenv().rayfieldCached then
-			Rayfield.Enabled = true
-			Rayfield.Loading.Visible = true
+-- 直接显示界面，跳过加载动画
+Rayfield.Enabled = true
+LoadingFrame.Visible = false
+Topbar.Visible = true
+Elements.Visible = true
 
-			task.wait(1.4)
-			Rayfield.Loading.Visible = false
-		end
-	end
+-- 设置界面初始状态
+Main.Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)
+Main.BackgroundTransparency = 0
+Main.Shadow.Image.ImageTransparency = 0.6
+
+-- 直接显示顶部栏和元素
+TweenService:Create(Topbar, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
+TweenService:Create(Topbar.CornerRepair, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
 
 	if getgenv then getgenv().rayfieldCached = true end
 
@@ -3790,48 +3795,71 @@ if Topbar:FindFirstChild('Settings') then
 	end)
 
 end
-
--- 修改这个事件处理，添加调试信息和修复逻辑
+-- 完全重写 Hide 按钮的点击事件处理
 Topbar.Hide.MouseButton1Click:Connect(function()
     if Debounce then 
-        print("Debounce is true, ignoring click")
+        if debugX then
+            warn("Hide button clicked but Debounce is true, ignoring")
+        end
         return 
     end
-    print("Hide button clicked, current Hidden state:", Hidden)
-    setVisibility(Hidden, not useMobileSizing)
-end)
-
--- 同时检查 setVisibility 函数，确保它正常工作
-local function setVisibility(visibility: boolean, notify: boolean?)
-    if Debounce then 
-        print("setVisibility: Debounce is true, returning")
-        return 
+    
+    if debugX then
+        print("Hide button clicked, current state - Hidden:", Hidden, "Minimised:", Minimised)
     end
-    print("setVisibility called with visibility:", visibility, "notify:", notify)
-    if visibility then
-        print("Setting Hidden to false, calling Unhide")
+    
+    -- 直接切换 Hidden 状态，不依赖当前的 Hidden 值
+    if Hidden then
+        -- 如果已经是隐藏状态，就显示
         Hidden = false
         Unhide()
+        if debugX then
+            print("Calling Unhide")
+        end
     else
-        print("Setting Hidden to true, calling Hide")
+        -- 如果是显示状态，就隐藏
         Hidden = true
-        Hide(notify)
+        Hide(not useMobileSizing) -- 只在非移动设备上显示通知
+        if debugX then
+            print("Calling Hide with notify:", not useMobileSizing)
+        end
+    end
+end)
+
+-- 同时确保 Hide 和 Unhide 函数能正确设置 Debounce
+-- 在 Hide 函数开头添加：
+local function Hide(notify: boolean?)
+    if Debounce then return end
+    Debounce = true
+    if debugX then
+        print("Starting Hide animation")
+    end
+    -- ... 其余代码保持不变
+
+-- 在 Hide 函数结尾确保 Debounce 被重置：
+    task.wait(0.5)
+    Main.Visible = false
+    Debounce = false
+    if debugX then
+        print("Hide animation completed, Debounce reset to false")
     end
 end
 
-for _, TopbarButton in ipairs(Topbar:GetChildren()) do
-	if TopbarButton.ClassName == "ImageButton" and TopbarButton.Name ~= 'Icon' then
-		TopbarButton.MouseEnter:Connect(function()
-			TweenService:Create(TopbarButton, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0}):Play()
-		end)
-
-		TopbarButton.MouseLeave:Connect(function()
-			TweenService:Create(TopbarButton, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
-		end)
-	end
+-- 在 Unhide 函数中同样处理：
+local function Unhide()
+    if Debounce then return end
+    Debounce = true
+    if debugX then
+        print("Starting Unhide animation")
+    end
+    
+    task.wait(0.5)
+    Minimised = false
+    Debounce = false
+    if debugX then
+        print("Unhide animation completed, Debounce reset to false")
+    end
 end
-
-
 
 function RayfieldLibrary:LoadConfiguration()
 	local config
