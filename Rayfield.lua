@@ -1188,11 +1188,12 @@ local function ensurePromptInBounds()
     end
 end
 
--- 创建可拖动的提示按钮
+-- 在 createMovablePrompt 函数中修改拖动逻辑
 local function createMovablePrompt()
     if MPrompt then
-        -- 使提示按钮可拖动
-        makeDraggable(MPrompt, MPrompt.Interact, false, {0, 0})
+        local isDragging = false
+        local dragStart = nil
+        local promptStartPosition = nil
         
         -- 添加拖动指示器
         local dragIndicator = Instance.new("ImageLabel")
@@ -1210,10 +1211,64 @@ local function createMovablePrompt()
         MPrompt.Title.Size = UDim2.new(1, -10, 1, -10)
         MPrompt.Title.Position = UDim2.new(0, 5, 0, 5)
         
-        -- 在拖动结束时检查边界
+        -- 鼠标按下事件 - 开始拖动
+        MPrompt.Interact.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                isDragging = true
+                dragStart = input.Position
+                promptStartPosition = MPrompt.Position
+                
+                -- 轻微视觉反馈
+                TweenService:Create(MPrompt, TweenInfo.new(0.1), {BackgroundTransparency = 0.2}):Play()
+            end
+        end)
+        
+        -- 鼠标移动事件 - 处理拖动
+        local dragConnection
+        dragConnection = UserInputService.InputChanged:Connect(function(input)
+            if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                local delta = input.Position - dragStart
+                local newPosition = UDim2.new(
+                    promptStartPosition.X.Scale, 
+                    promptStartPosition.X.Offset + delta.X,
+                    promptStartPosition.Y.Scale, 
+                    promptStartPosition.Y.Offset + delta.Y
+                )
+                MPrompt.Position = newPosition
+            end
+        end)
+        
+        -- 鼠标释放事件 - 结束拖动
         MPrompt.Interact.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                ensurePromptInBounds()
+                if isDragging then
+                    isDragging = false
+                    ensurePromptInBounds()
+                    TweenService:Create(MPrompt, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
+                else
+                    -- 如果没有拖动，则认为是点击，打开UI
+                    if not Hidden then return end
+                    Hidden = false
+                    Unhide()
+                end
+            end
+        end)
+        
+        -- 添加点击延迟检测，区分拖动和点击
+        local clickThreshold = 0.3 -- 秒
+        local mouseDownTime = 0
+        
+        MPrompt.Interact.MouseButton1Down:Connect(function()
+            mouseDownTime = tick()
+        end)
+        
+        MPrompt.Interact.MouseButton1Click:Connect(function()
+            local clickDuration = tick() - mouseDownTime
+            -- 如果点击时间很短，认为是点击而不是拖动
+            if clickDuration < clickThreshold and not isDragging then
+                if not Hidden then return end
+                Hidden = false
+                Unhide()
             end
         end)
     end
