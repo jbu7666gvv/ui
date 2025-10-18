@@ -1754,41 +1754,39 @@ function RayfieldLibrary:CreateWindow(Settings)
 		LoadingFrame.Version.Text = "本熊ui"
 	end
 
-	if Settings.Icon and Settings.Icon ~= 0 and Topbar:FindFirstChild('Icon') then
-		Topbar.Icon.Visible = true
-		Topbar.Title.Position = UDim2.new(0, 47, 0.5, 0)
+if Settings.Icon and Settings.Icon ~= 0 and Topbar:FindFirstChild('Icon') then
+    Topbar.Icon.Visible = true
+    Topbar.Title.Position = UDim2.new(0, 47, 0.5, 0)
 
--- 如果确实要使用那个背景图片作为图标
-if Settings.Icon then
+    if dragBar then
+        dragBar.Visible = false
+        dragBarCosmetic.BackgroundTransparency = 1
+        dragBar.Visible = true
+    end
+
+    if Settings.Theme then
+        local success, result = pcall(ChangeTheme, Settings.Theme)
+        if not success then
+            local success, result2 = pcall(ChangeTheme, 'Default')
+            if not success then
+                warn('CRITICAL ERROR - NO DEFAULT THEME')
+                print(result2)
+            end
+            warn('issue rendering theme. no theme on file')
+            print(result)
+        end
+    end
+    
+    -- 添加完整的图标设置逻辑
     if typeof(Settings.Icon) == 'string' and Icons then
         local asset = getIcon(Settings.Icon)
         Topbar.Icon.Image = 'rbxassetid://'..asset.id
         Topbar.Icon.ImageRectOffset = asset.imageRectOffset
         Topbar.Icon.ImageRectSize = asset.imageRectSize
     else
-        -- 直接使用完整的图片URL，不拼接asset.id
-        Topbar.Icon.Image = 'https://raw.githubusercontent.com/jbu7666gvv/tu/d267405e769158957ab402e8a2ec9a5d019cf78b/hhbg.jpg'
+        Topbar.Icon.Image = getAssetUri(Settings.Icon)
     end
-end
-
-	if dragBar then
-		dragBar.Visible = false
-		dragBarCosmetic.BackgroundTransparency = 1
-		dragBar.Visible = true
-	end
-
-	if Settings.Theme then
-		local success, result = pcall(ChangeTheme, Settings.Theme)
-		if not success then
-			local success, result2 = pcall(ChangeTheme, 'Default')
-			if not success then
-				warn('CRITICAL ERROR - NO DEFAULT THEME')
-				print(result2)
-			end
-			warn('issue rendering theme. no theme on file')
-			print(result)
-		end
-	end
+end  -- 添加这个缺失的 end
 
 	Topbar.Visible = false
 	Elements.Visible = false
@@ -1799,8 +1797,8 @@ end
 			while true do
 				task.wait(math.random(180, 600))
 				RayfieldLibrary:Notify({
-					Title = "Rayfield Interface",
-					Content = "Enjoying this UI library? Find it at sirius.menu/discord",
+					Title = "本熊脚本",
+					Content = "本熊脚本",
 					Duration = 7,
 					Image = 4370033185,
 				})
@@ -3793,32 +3791,32 @@ if Topbar:FindFirstChild('Settings') then
 
 end
 
-
+-- 修改这个事件处理，添加调试信息和修复逻辑
 Topbar.Hide.MouseButton1Click:Connect(function()
-	setVisibility(Hidden, not useMobileSizing)
+    if Debounce then 
+        print("Debounce is true, ignoring click")
+        return 
+    end
+    print("Hide button clicked, current Hidden state:", Hidden)
+    setVisibility(Hidden, not useMobileSizing)
 end)
 
-hideHotkeyConnection = UserInputService.InputBegan:Connect(function(input, processed)
-	if (input.KeyCode == Enum.KeyCode[getSetting("General", "rayfieldOpen")]) and not processed then
-		if Debounce then return end
-		if Hidden then
-			Hidden = false
-			Unhide()
-		else
-			Hidden = true
-			Hide()
-		end
-	end
-end)
-
-if MPrompt then
-	MPrompt.Interact.MouseButton1Click:Connect(function()
-		if Debounce then return end
-		if Hidden then
-			Hidden = false
-			Unhide()
-		end
-	end)
+-- 同时检查 setVisibility 函数，确保它正常工作
+local function setVisibility(visibility: boolean, notify: boolean?)
+    if Debounce then 
+        print("setVisibility: Debounce is true, returning")
+        return 
+    end
+    print("setVisibility called with visibility:", visibility, "notify:", notify)
+    if visibility then
+        print("Setting Hidden to false, calling Unhide")
+        Hidden = false
+        Unhide()
+    else
+        print("Setting Hidden to true, calling Hide")
+        Hidden = true
+        Hide(notify)
+    end
 end
 
 for _, TopbarButton in ipairs(Topbar:GetChildren()) do
@@ -3832,6 +3830,7 @@ for _, TopbarButton in ipairs(Topbar:GetChildren()) do
 		end)
 	end
 end
+
 
 
 function RayfieldLibrary:LoadConfiguration()
@@ -4099,10 +4098,6 @@ if CEnabled and Main:FindFirstChild('Notice') then
 	TweenService:Create(Main.Notice, TweenInfo.new(0.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 280, 0, 35), Position = UDim2.new(0.5, 0, 0, -50), BackgroundTransparency = 0.5}):Play()
 	TweenService:Create(Main.Notice.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0.1}):Play()
 end
--- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA why :(
---if not useStudio then
---	task.spawn(loadWithTimeout, "https://raw.githubusercontent.com/SiriusSoftwareLtd/Sirius/refs/heads/request/boost.lua")
---end
 
 task.delay(4, function()
 	RayfieldLibrary.LoadConfiguration()
