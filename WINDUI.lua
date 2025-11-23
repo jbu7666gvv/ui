@@ -11682,7 +11682,13 @@ ac:SetTheme"Dark"
 ac:SetLanguage(ak.Language)
 
 
+-- 在库初始化时立即禁用高性能消耗功能
 function ac.CreateWindow(as,at)
+    -- 强制禁用某些高性能功能
+    at.Acrylic = false  -- 毛玻璃效果很耗性能
+    at.Background = nil  -- 禁用背景视频/图片
+    at.Resizable = false  -- 禁用窗口调整大小
+    at.ScrollBarEnabled = false  -- 禁用自定义滚动条
 local au=a.load'X'
 
 if not isfolder"WindUI"then
