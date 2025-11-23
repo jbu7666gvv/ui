@@ -11507,11 +11507,13 @@ game:GetService"Players".LocalPlayer or nil
 local aq=game:GetService"CoreGui"
 
 
-ac.ScreenGui=al("ScreenGui",{
-Name="WindUI",
-Parent=aq,
-IgnoreGuiInset=true,
-ScreenInsets="None",
+ac.ScreenGui = al("ScreenGui", {
+    Name = "WindUI",
+    Parent = aq,
+    ResetOnSpawn = false,  -- 重要：防止重生时重置
+    ZIndexBehavior = "Sibling",  -- 重要：ZIndex 管理
+    IgnoreGuiInset = true,
+    DisplayOrder = 999,  -- 确保显示在最前
 },{
 al("UIScale",{
 Scale=ac.Scale,
@@ -11530,15 +11532,20 @@ Name="ToolTips"
 })
 })
 
-ac.NotificationGui=al("ScreenGui",{
-Name="WindUI/Notifications",
-Parent=aq,
-IgnoreGuiInset=true,
+ac.NotificationGui = al("ScreenGui", {
+    Name = "WindUI/Notifications", 
+    Parent = aq,
+    ResetOnSpawn = false,
+    ZIndexBehavior = "Sibling",
+    DisplayOrder = 1000,  -- 通知显示在最前
 })
-ac.DropdownGui=al("ScreenGui",{
-Name="WindUI/Dropdowns",
-Parent=aq,
-IgnoreGuiInset=true,
+
+ac.DropdownGui = al("ScreenGui", {
+    Name = "WindUI/Dropdowns",
+    Parent = aq, 
+    ResetOnSpawn = false,
+    ZIndexBehavior = "Sibling",
+    DisplayOrder = 998,
 })
 
 ak.Init(ac)
