@@ -2,7 +2,7 @@
      _      ___         ____  ______
     | | /| / (_)__  ___/ / / / /  _/
     | |/ |/ / / _ \/ _  / /_/ // /  
-    |__/|__/_/_//_/\_,_/\____/___/
+    |__/|__/_/_//_/\_,_/\____/___
     
     v1.6.63  |  2025-12-25  |  Roblox UI Library for scripts
     
@@ -9933,7 +9933,7 @@ Icons=a.load'W'
 
 local ao=ah("TextBox",{
 Text="",
-PlaceholderText="Search...",
+PlaceholderText="搜索...",
 ThemeTag={
 PlaceholderColor3="Placeholder",
 TextColor3="Text",
@@ -12276,7 +12276,7 @@ local J=false
 
 
 
-local L=an("Search","search",au.UIElements.SideBarContainer,true)
+local L=an("搜索","search",au.UIElements.SideBarContainer,true)
 L.Size=UDim2.new(1,-au.UIPadding/2,0,39)
 L.Position=UDim2.new(0,au.UIPadding/2,0,0)
 
