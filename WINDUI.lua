@@ -2,7 +2,7 @@
      _      ___         ____  ______
     | | /| / (_)__  ___/ / / / /  _/
     | |/ |/ / / _ \/ _  / /_/ // /  
-    |__/|__/_/_//_/\_,_/\____/_
+    |__/|__/_/_//_/\_,_/\____/___/
     
     v1.6.63  |  2025-12-25  |  Roblox UI Library for scripts
     
@@ -1606,7 +1606,10 @@ Copy=CopyLink
 end
 
 
-return aa end  function a.i()
+return aa end function a.h()
+    -- 密钥服务已被移除，返回空表
+    return {}
+end function a.i()
 
 
 return[[
