@@ -1,21 +1,4 @@
---[[
-     _      ___         ____  ______
-    | | /| / (_)__  ___/ / / / /  _/
-    | |/ |/ / / _ \/ _  / /_/ // /  
-    |__/|__/_/_//_/\_,_/\____/___/
-    
-    v1.6.63  |  2025-12-25  |  Roblox UI Library for scripts
-    
-    To view the source code, see the `src/` folder on the official GitHub repository.
-    
-    Author: Footagesus (Footages, .ftgs, oftgs)
-    Github: https://github.com/Footagesus/WindUI
-    Discord: https://discord.gg/ftgs-development-hub-1300692552005189632
-    License: MIT
-]]
-
 local a a={cache={}, load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()return{
-
 
 Primary=Color3.fromHex"#0091FF",
 
@@ -31,7 +14,6 @@ Hover="Text",
 WindowBackground="Background",
 
 WindowShadow="Black",
-
 
 WindowTopbarTitle="Text",
 WindowTopbarAuthor="Text",
@@ -811,8 +793,6 @@ end
 return L
 end
 
-
-
 function p.Color3ToHSB(v)
 local x,B,C=v.R,v.G,v.B
 local F=math.max(x,B,C)
@@ -967,42 +947,12 @@ UIElements={},
 Closed=false,
 }
 
-
-
 f.NotificationIndex=f.NotificationIndex+1
 f.Notifications[f.NotificationIndex]=h
-
-
-
-
-
-
-
-
 
 local j
 
 if h.Icon then
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 j=b.Image(
 h.Icon,
@@ -1103,7 +1053,6 @@ FontFace=Font.new(b.Font,Enum.FontWeight.Medium),
 Parent=p
 })
 end
-
 
 local r=b.NewRoundFrame(f.UICorner,"Squircle",{
 Size=UDim2.new(1,0,0,0),
@@ -11706,7 +11655,7 @@ ay.WindUI=aa
 ay.Parent=aa.ScreenGui.Window
 
 if aa.Window then
-warn"You cannot create more than one window"
+warn"你不能创建多个窗口"
 return
 end
 
