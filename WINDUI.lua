@@ -1,31 +1,21 @@
 local a a={cache={}, load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()return{
-
 Primary=Color3.fromHex"#0091FF",
-
 White=Color3.new(1,1,1),
 Black=Color3.new(0,0,0),
-
 Dialog="Accent",
-
 Background="Accent",
 BackgroundTransparency=0,
 Hover="Text",
-
 WindowBackground="Background",
-
 WindowShadow="Black",
-
 WindowTopbarTitle="Text",
 WindowTopbarAuthor="Text",
 WindowTopbarIcon="Icon",
 WindowTopbarButtonIcon="Icon",
-
 WindowSearchBarBackground="Background",
-
 TabBackground="Hover",
 TabTitle="Text",
 TabIcon="Icon",
-
 ElementBackground="Text",
 ElementTitle="Text",
 ElementDesc="Text",
@@ -933,22 +923,36 @@ return h
 end
 
 function f.New(g)
-local h={
-Title=g.Title or"Notification",
-Content=g.Content or nil,
-Icon=g.Icon or nil,
-IconThemed=g.IconThemed,
-Background=g.Background,
-BackgroundImageTransparency=g.BackgroundImageTransparency,
-Duration=g.Duration or 5,
-Buttons=g.Buttons or{},
-CanClose=g.CanClose~=false,
-UIElements={},
-Closed=false,
+local h = {
+Title = g.Title or "Notification",
+Content = g.Content or nil,
+Icon = g.Icon or nil,
+IconThemed = g.IconThemed,
+Background = g.Background,
+BackgroundImageTransparency = g.BackgroundImageTransparency,
+Duration = g.Duration or 5,
+Buttons = g.Buttons or {},
+CanClose = g.CanClose ~= false,
+SoundId = g.SoundId,
+SoundVolume = g.SoundVolume or 0.3,
+UIElements = {},
+Closed = false,
 }
 
-f.NotificationIndex=f.NotificationIndex+1
-f.Notifications[f.NotificationIndex]=h
+f.NotificationIndex = f.NotificationIndex + 1
+f.Notifications[f.NotificationIndex] = h
+
+if h.SoundId then
+local sound = Instance.new("Sound")
+sound.SoundId = h.SoundId
+sound.Volume = h.SoundVolume
+sound.Parent = game:GetService("SoundService")
+sound:Play()
+
+sound.Ended:Connect(function()
+sound:Destroy()
+end)
+end
 
 local j
 
@@ -1147,7 +1151,6 @@ return h
 end
 
 return f end function a.e()
-    -- Platoboost 服务已被移除
     return {
         New = function()
             return {
@@ -1157,7 +1160,6 @@ return f end function a.e()
         end
     }
 end function a.f()
-    -- Panda Development 服务已被移除
     return {
         New = function()
             return {
@@ -1167,7 +1169,6 @@ end function a.f()
         end
     }
 end function a.g()
-    -- Luarmor 服务已被移除
     return {
         New = function()
             return {
@@ -1177,7 +1178,6 @@ end function a.g()
         end
     }
 end function a.h()
-    -- 密钥服务已被移除，返回空表
     return {}
 end function a.i()
 
@@ -1285,25 +1285,10 @@ ThemeTag={
 ImageColor3="White",
 },
 Size=UDim2.new(1,0,1,0),
-
 ImageTransparency=0.6,
 Name="Outline",
 },{
-
-
-
-
-
-
-
-
-
-
-
-
-
 }),
-
 ab.NewRoundFrame(am,"Squircle",{
 Size=UDim2.new(1,0,1,0),
 Name="Frame",
@@ -1356,14 +1341,12 @@ end)
 return ao
 end
 
-
 return aa end function a.k()
 local aa={}
 
 local ab=a.load'b'
 local ac=ab.New local ad=
 ab.Tween
-
 
 function aa.New(ae,af,ag,ah,ai,aj,ak,al)
 ah=ah or"Input"
