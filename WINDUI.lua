@@ -20,6 +20,7 @@ ElementBackground="Text",
 ElementTitle="Text",
 ElementDesc="Text",
 ElementIcon="Icon",
+
 PopupBackground="Background",
 PopupBackgroundTransparency="BackgroundTransparency",
 PopupTitle="Text",
@@ -7240,12 +7241,12 @@ HorizontalAlignment="Right",
 
 local u={
 {
-Title="Cancel",
+Title="取消",
 Variant="Secondary",
 Callback=function()end
 },
 {
-Title="Apply",
+Title="应用",
 Icon="chevron-right",
 Variant="Primary",
 Callback=function()av(Color3.fromHSV(aw.Hue,aw.Sat,aw.Vib),aw.Transparency)end
@@ -8513,12 +8514,7 @@ local av
 local aw
 local ax
 local ay=false
-
-
-
 if ap.Desc then
-
-
 af.AddSignal(ap.UIElements.Main.InputBegan,function()
 ay=true
 aw=task.spawn(function()
@@ -8676,7 +8672,7 @@ ImageTransparency=.6,
 }),
 ah("TextLabel",{
 AutomaticSize="XY",
-Text="This tab is empty",
+Text="此标签页为空",
 ThemeTag={
 TextColor3="Text"
 },
@@ -9389,7 +9385,7 @@ elseif av~=""then
 ah("TextLabel",{
 Size=UDim2.new(1,0,0,70),
 BackgroundTransparency=1,
-Text="No results found",
+Text="未找到结果",
 TextSize=16,
 ThemeTag={
 TextColor3="Text",
@@ -11150,17 +11146,17 @@ if not au.IgnoreAlerts then
 au:SetToTheCenter()
 au:Dialog{
 
-Title="Close Window",
-Content="Do you want to close this window? You will not be able to open it again.",
+Title="关闭窗口",
+Content="是否要关闭此窗口？您将无法再次打开它",
 Buttons={
 {
-Title="Cancel",
+Title="取消",
 
 Callback=function()end,
 Variant="Secondary",
 },
 {
-Title="Close Window",
+Title="关闭窗口",
 
 Callback=function()au:Destroy()end,
 Variant="Primary",
@@ -11720,7 +11716,6 @@ else
 loadKeysystem()
 end
 end
-
 repeat task.wait()until aA
 end
 local aE=az(ay)
