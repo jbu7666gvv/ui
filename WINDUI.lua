@@ -1,4 +1,3 @@
-
 local a a={cache={}, load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()return{
 Primary=Color3.fromHex"#0091FF",
 White=Color3.new(1,1,1),
@@ -1634,7 +1633,7 @@ return ah
 end
 
 return ae end function a.m()
-    -- 密钥系统已被移除
+    
     return {
         new = function()
             warn("[WindUI] 密钥系统已禁用")
@@ -11340,85 +11339,165 @@ end
 end
 end
 
-function au:SetBackgroundImage(imageUrl, transparency)
-    self.Background = imageUrl
-    self.BackgroundImageTransparency = transparency or 0
-    
-    if self.VideoFrame then
-        self.VideoFrame:Destroy()
-        self.VideoFrame = nil
-    end
-    
-    if self.ImageBackground and self.ImageBackground.Parent then
-        self.ImageBackground.Image = imageUrl
-        self.ImageBackground.ImageTransparency = transparency or 0
-    else
-        self.ImageBackground = Instance.new("ImageLabel")
-        self.ImageBackground.Name = "DynamicBackground"
-        self.ImageBackground.Size = UDim2.new(1, 0, 1, 0)
-        self.ImageBackground.BackgroundTransparency = 1
-        self.ImageBackground.Image = imageUrl
-        self.ImageBackground.ImageTransparency = transparency or 0
-        self.ImageBackground.ScaleType = Enum.ScaleType.Crop
-        self.ImageBackground.ZIndex = 0
-        self.ImageBackground.Parent = self.UIElements.Main.Background
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, self.UICorner or 16)
-        corner.Parent = self.ImageBackground
-    end
-    
-    if self.DragButton and not self.DragButton.Parent then
-        self.DragButton.Parent = self.UIElements.Main
-    end
-    
-    return self.ImageBackground
-end
 
 function au:SetBackgroundVideo(videoUrl, transparency)
+  
     self.Background = "video:" .. videoUrl
-    if self.ImageBackground and self.ImageBackground.Parent then
+    
+    
+    if aF and aF.Parent then
+        aF:Destroy()
+    end
+    if self.ImageBackground then
         self.ImageBackground:Destroy()
         self.ImageBackground = nil
     end
     
-    if self.VideoFrame and self.VideoFrame.Parent then
-        self.VideoFrame:Destroy()
-        self.VideoFrame = nil
-    end
+    local videoPath = videoUrl
     
-    self.VideoFrame = Instance.new("VideoFrame")
-    self.VideoFrame.Name = "DynamicVideoBackground"
-    self.VideoFrame.Size = UDim2.new(1, 0, 1, 0)
-    self.VideoFrame.BackgroundTransparency = 1
-    self.VideoFrame.Video = videoUrl
-    self.VideoFrame.Looped = true
-    self.VideoFrame.Volume = 0
-    self.VideoFrame.ZIndex = 0
-    self.VideoFrame.Parent = self.UIElements.Main.Background
     
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, self.UICorner or 16)
-    corner.Parent = self.VideoFrame
-    if transparency and transparency > 0 then
-        if self.VideoOverlay then
-            self.VideoOverlay:Destroy()
+    if string.find(videoUrl, "http") then
+        local fileName = self.Folder.."/assets/."..ak.SanitizeFilename(videoUrl)..".webm"
+        
+        
+        if not isfile(fileName) then
+            local downloadSuccess, downloadErr = pcall(function()
+                local request = ak.Request or syn and syn.request or http_request
+                if request then
+                    local response = request({
+                        Url = videoUrl,
+                        Method = "GET",
+                        Headers = {["User-Agent"] = "Roblox/Exploit"}
+                    })
+                    if response and response.Body then
+                        writefile(fileName, response.Body)
+                    end
+                end
+            end)
+            
+            if not downloadSuccess then
+                warn("[ WindUI.Window.Background ] Failed to download video: "..tostring(downloadErr))
+                return
+            end
         end
-        self.VideoOverlay = Instance.new("Frame")
-        self.VideoOverlay.Name = "VideoOverlay"
-        self.VideoOverlay.Size = UDim2.new(1, 0, 1, 0)
-        self.VideoOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
-        self.VideoOverlay.BackgroundTransparency = transparency
-        self.VideoOverlay.BorderSizePixel = 0
-        self.VideoOverlay.ZIndex = 1
-        self.VideoOverlay.Parent = self.UIElements.Main.Background
+        
+        
+        local loadSuccess, assetPath = pcall(function()
+            return getcustomasset(fileName)
+        end)
+        
+        if not loadSuccess then
+            warn("[ WindUI.Window.Background ] Failed to load custom asset: "..tostring(assetPath))
+            return
+        end
+        
+        warn("[ WindUI.Window.Background ] VideoFrame may not work with custom video")
+        videoPath = assetPath
     end
-    self.VideoFrame:Play()
-    if self.DragButton and not self.DragButton.Parent then
+    
+    
+    aF = al("VideoFrame", {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        Video = videoPath,
+        Looped = true,
+        Volume = 0,
+    }, {
+        al("UICorner", {
+            CornerRadius = UDim.new(0, self.UICorner or 16)
+        }),
+    })
+    
+    
+    aF.Parent = self.UIElements.Main.Background
+    
+    
+    aF:Play()
+    
+    
+    if self.DragButton then
         self.DragButton.Parent = self.UIElements.Main
     end
     
-    return self.VideoFrame
+    return aF
+end
+
+
+function au:SetBackgroundImage(imageUrl, transparency)
+    
+    if aF and aF.Parent then
+        aF:Destroy()
+    end
+    if self.ImageBackground then
+        self.ImageBackground:Destroy()
+        self.ImageBackground = nil
+    end
+    
+    local imagePath = imageUrl
+    
+    
+    if string.find(imageUrl, "http") then
+        local ext = imageUrl:match("%.([%w]+)$") or "png"
+        local fileName = self.Folder.."/assets/."..ak.SanitizeFilename(imageUrl).."."..ext
+        
+        if not isfile(fileName) then
+            local downloadSuccess, downloadErr = pcall(function()
+                local request = ak.Request or syn and syn.request or http_request
+                if request then
+                    local response = request({
+                        Url = imageUrl,
+                        Method = "GET",
+                        Headers = {["User-Agent"] = "Roblox/Exploit"}
+                    })
+                    if response and response.Body then
+                        writefile(fileName, response.Body)
+                    end
+                end
+            end)
+            
+            if not downloadSuccess then
+                warn("[ Window.Background ] Failed to download image: "..tostring(downloadErr))
+                return
+            end
+        end
+        
+        local loadSuccess, assetPath = pcall(function()
+            return getcustomasset(fileName)
+        end)
+        
+        if not loadSuccess then
+            warn("[ Window.Background ] Failed to load custom asset: "..tostring(assetPath))
+            return
+        end
+        
+        imagePath = assetPath
+    end
+    
+    
+    self.ImageBackground = al("ImageLabel", {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        Image = imagePath,
+        ImageTransparency = transparency or 0,
+        ScaleType = "Crop",
+    }, {
+        al("UICorner", {
+            CornerRadius = UDim.new(0, self.UICorner or 16)
+        }),
+    })
+    
+    self.ImageBackground.Parent = self.UIElements.Main.Background
+    
+    
+    self.Background = imageUrl
+    self.BackgroundImageTransparency = transparency or 0
+    
+    
+    if self.DragButton then
+        self.DragButton.Parent = self.UIElements.Main
+    end
+    
+    return self.ImageBackground
 end
 
 
