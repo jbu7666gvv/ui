@@ -9451,7 +9451,9 @@ an:Open()
 return an
 end
 
-return ae end function a.Y()
+return ae end
+
+function a.Y()
 local aa=(cloneref or clonereference or function(aa)return aa end)
 
 local ae=aa(game:GetService"UserInputService")
@@ -11337,32 +11339,60 @@ end
 end
 end
 
+function au:SetBackgroundImage(imageUrl, transparency)
+    local bgContainer = self.UIElements.Main.Background
+    for _, child in ipairs(bgContainer:GetChildren()) do
+        if child:IsA("ImageLabel") or child:IsA("VideoFrame") then
+            child:Destroy()
+        end
+    end
 
+    local imageLabel = Instance.new("ImageLabel")
+    imageLabel.Size = UDim2.new(1, 0, 1, 0)
+    imageLabel.BackgroundTransparency = 1
+    imageLabel.Image = imageUrl
+    imageLabel.ImageTransparency = transparency or 0
+    imageLabel.ScaleType = Enum.ScaleType.Crop
+    imageLabel.Parent = bgContainer
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, self.UICorner or 16)
+    corner.Parent = imageLabel
+    self.VideoFrame = nil
+    
+    return imageLabel
+end
 
+function au:SetBackgroundVideo(videoUrl, transparency)
+    local bgContainer = self.UIElements.Main.Background
+    for _, child in ipairs(bgContainer:GetChildren()) do
+        if child:IsA("ImageLabel") or child:IsA("VideoFrame") then
+            child:Destroy()
+        end
+    end
 
+    local videoFrame = Instance.new("VideoFrame")
+    videoFrame.Size = UDim2.new(1, 0, 1, 0)
+    videoFrame.BackgroundTransparency = 1
+    videoFrame.Video = videoUrl
+    videoFrame.Looped = true
+    videoFrame.Volume = 0
+    videoFrame.Parent = bgContainer
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if transparency and transparency > 0 then
+        local overlay = Instance.new("Frame")
+        overlay.Size = UDim2.new(1, 0, 1, 0)
+        overlay.BackgroundColor3 = Color3.new(0, 0, 0)
+        overlay.BackgroundTransparency = transparency
+        overlay.Parent = bgContainer
+    end
+    videoFrame:Play()
+    self.VideoFrame = videoFrame
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, self.UICorner or 16)
+    corner.Parent = videoFrame
+    
+    return videoFrame
+end
 
 return au
 end end end
@@ -11716,6 +11746,7 @@ else
 loadKeysystem()
 end
 end
+
 repeat task.wait()until aA
 end
 local aE=az(ay)
