@@ -1,3 +1,4 @@
+
 local a a={cache={}, load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()return{
 Primary=Color3.fromHex"#0091FF",
 White=Color3.new(1,1,1),
@@ -11340,59 +11341,111 @@ end
 end
 
 function au:SetBackgroundImage(imageUrl, transparency)
-    local bgContainer = self.UIElements.Main.Background
-    for _, child in ipairs(bgContainer:GetChildren()) do
-        if child:IsA("ImageLabel") or child:IsA("VideoFrame") then
-            child:Destroy()
-        end
-    end
-
-    local imageLabel = Instance.new("ImageLabel")
-    imageLabel.Size = UDim2.new(1, 0, 1, 0)
-    imageLabel.BackgroundTransparency = 1
-    imageLabel.Image = imageUrl
-    imageLabel.ImageTransparency = transparency or 0
-    imageLabel.ScaleType = Enum.ScaleType.Crop
-    imageLabel.Parent = bgContainer
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, self.UICorner or 16)
-    corner.Parent = imageLabel
-    self.VideoFrame = nil
+    self.Background = imageUrl
+    self.BackgroundImageTransparency = transparency or 0
     
-    return imageLabel
+    if self.VideoFrame then
+        self.VideoFrame:Destroy()
+        self.VideoFrame = nil
+    end
+    
+    if self.ImageBackground and self.ImageBackground.Parent then
+        self.ImageBackground.Image = imageUrl
+        self.ImageBackground.ImageTransparency = transparency or 0
+    else
+        self.ImageBackground = Instance.new("ImageLabel")
+        self.ImageBackground.Name = "DynamicBackground"
+        self.ImageBackground.Size = UDim2.new(1, 0, 1, 0)
+        self.ImageBackground.BackgroundTransparency = 1
+        self.ImageBackground.Image = imageUrl
+        self.ImageBackground.ImageTransparency = transparency or 0
+        self.ImageBackground.ScaleType = Enum.ScaleType.Crop
+        self.ImageBackground.ZIndex = 0
+        self.ImageBackground.Parent = self.UIElements.Main.Background
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, self.UICorner or 16)
+        corner.Parent = self.ImageBackground
+    end
+    
+    if self.DragButton and not self.DragButton.Parent then
+        self.DragButton.Parent = self.UIElements.Main
+    end
+    
+    return self.ImageBackground
 end
 
 function au:SetBackgroundVideo(videoUrl, transparency)
-    local bgContainer = self.UIElements.Main.Background
-    for _, child in ipairs(bgContainer:GetChildren()) do
-        if child:IsA("ImageLabel") or child:IsA("VideoFrame") then
-            child:Destroy()
-        end
+    self.Background = "video:" .. videoUrl
+    if self.ImageBackground and self.ImageBackground.Parent then
+        self.ImageBackground:Destroy()
+        self.ImageBackground = nil
     end
-
-    local videoFrame = Instance.new("VideoFrame")
-    videoFrame.Size = UDim2.new(1, 0, 1, 0)
-    videoFrame.BackgroundTransparency = 1
-    videoFrame.Video = videoUrl
-    videoFrame.Looped = true
-    videoFrame.Volume = 0
-    videoFrame.Parent = bgContainer
-
-    if transparency and transparency > 0 then
-        local overlay = Instance.new("Frame")
-        overlay.Size = UDim2.new(1, 0, 1, 0)
-        overlay.BackgroundColor3 = Color3.new(0, 0, 0)
-        overlay.BackgroundTransparency = transparency
-        overlay.Parent = bgContainer
+    
+    if self.VideoFrame and self.VideoFrame.Parent then
+        self.VideoFrame:Destroy()
+        self.VideoFrame = nil
     end
-    videoFrame:Play()
-    self.VideoFrame = videoFrame
+    
+    self.VideoFrame = Instance.new("VideoFrame")
+    self.VideoFrame.Name = "DynamicVideoBackground"
+    self.VideoFrame.Size = UDim2.new(1, 0, 1, 0)
+    self.VideoFrame.BackgroundTransparency = 1
+    self.VideoFrame.Video = videoUrl
+    self.VideoFrame.Looped = true
+    self.VideoFrame.Volume = 0
+    self.VideoFrame.ZIndex = 0
+    self.VideoFrame.Parent = self.UIElements.Main.Background
+    
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, self.UICorner or 16)
-    corner.Parent = videoFrame
+    corner.Parent = self.VideoFrame
+    if transparency and transparency > 0 then
+        if self.VideoOverlay then
+            self.VideoOverlay:Destroy()
+        end
+        self.VideoOverlay = Instance.new("Frame")
+        self.VideoOverlay.Name = "VideoOverlay"
+        self.VideoOverlay.Size = UDim2.new(1, 0, 1, 0)
+        self.VideoOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+        self.VideoOverlay.BackgroundTransparency = transparency
+        self.VideoOverlay.BorderSizePixel = 0
+        self.VideoOverlay.ZIndex = 1
+        self.VideoOverlay.Parent = self.UIElements.Main.Background
+    end
+    self.VideoFrame:Play()
+    if self.DragButton and not self.DragButton.Parent then
+        self.DragButton.Parent = self.UIElements.Main
+    end
     
-    return videoFrame
+    return self.VideoFrame
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 return au
 end end end
