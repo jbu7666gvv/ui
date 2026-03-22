@@ -88,7 +88,7 @@ l.SetIconsType"lucide"
 local m
 
 local p={
-Font="rbxassetid://11322590111",
+Font="https://cdn.jsdelivr.net/gh/jbu7666gvv/tu@main/271.ttf",
 Localization=nil,
 CanDraggable=true,
 Theme=nil,
@@ -276,10 +276,41 @@ p.UpdateFont(p.Font)
 end
 
 function p.UpdateFont(r)
-p.Font=r
-for u,v in next,p.FontObjects do
-v.FontFace=Font.new(r,v.FontFace.Weight,v.FontFace.Style)
-end
+local fontId = r
+if type(r) == "string" and string.find(r, "http") then
+        local fileName = "WindUI/fonts/" .. p.SanitizeFilename(r) .. ".ttf"
+        
+        if not isfolder("WindUI/fonts") then
+            makefolder("WindUI/fonts")
+        end
+        if not isfile(fileName) then
+            local success, err = pcall(function()
+                local response = p.Request{
+                    Url = r,
+                    Method = "GET",
+                    Headers = {["User-Agent"] = "Roblox/Exploit"}
+                }
+                if response and response.Body then
+                    writefile(fileName, response.Body)
+                end
+            end)
+            if not success then
+                warn("[WindUI] Failed to download font: " .. tostring(err))
+                fontId = "rbxassetid://12187365364"
+            end
+        end
+        if isfile(fileName) then
+            local success, asset = pcall(getcustomasset, fileName)
+            if success then
+                fontId = asset
+            end
+        end
+    end
+    
+    p.Font = fontId
+    for u,v in next,p.FontObjects do
+        v.FontFace = Font.new(fontId, v.FontFace.Weight, v.FontFace.Style)
+    end
 end
 
 function p.GetThemeProperty(r,u)
