@@ -11889,4 +11889,65 @@ ar.init()
 end
 return aE
 end
+aa.通知 = aa.Notify
+aa.弹出窗口 = aa.Popup
+aa.设置主题 = aa.SetTheme
+aa.获取主题 = aa.GetCurrentTheme
+aa.创建窗口 = aa.CreateWindow
+aa.添加主题 = aa.AddTheme
+aa.设置字体 = aa.SetFont
+aa.渐变 = aa.Gradient
+aa.本地化 = aa.Localization
+aa.设置语言 = aa.SetLanguage
+local originalCreateWindow = aa.CreateWindow
+aa.CreateWindow = function(config)
+    local window = originalCreateWindow(config)
+    
+    if window then
+        window.标签页 = window.Tab
+        window.分组 = window.Section
+        window.标签 = window.Tag
+        window.对话框 = window.Dialog
+        window.通知 = window.Notify
+        window.关闭 = window.Close
+        window.打开 = window.Open
+        window.切换 = window.Toggle
+        window.销毁 = window.Destroy
+        window.设置标题 = window.SetTitle
+        window.设置作者 = window.SetAuthor
+        window.设置大小 = window.SetSize
+        window.设置可拖拽 = window.SetDraggable
+        window.全屏切换 = window.ToggleFullscreen
+        window.居中 = window.SetToTheCenter
+        window.设置缩放 = window.SetUIScale
+        window.锁定全部 = window.LockAll
+        window.解锁全部 = window.UnlockAll
+        window.选择标签页 = window.SelectTab
+        local originalTab = window.Tab
+        window.标签页 = function(tabConfig)
+            local tab = originalTab(tabConfig)
+            if tab then
+                tab.按钮 = tab.Button
+                tab.开关 = tab.Toggle
+                tab.输入框 = tab.Input
+                tab.滑块 = tab.Slider
+                tab.下拉框 = tab.Dropdown
+                tab.颜色选择器 = tab.Colorpicker
+                tab.代码 = tab.Code
+                tab.段落 = tab.Paragraph
+                tab.分隔线 = tab.Divider
+                tab.间距 = tab.Space
+                tab.图片 = tab.Image
+                tab.组 = tab.Group
+                tab.快捷键 = tab.Keybind
+                tab.锁定全部 = tab.LockAll
+                tab.解锁全部 = tab.UnlockAll
+            end
+            return tab
+        end
+    end
+    
+    return window
+end
+
 return aa
