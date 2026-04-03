@@ -9462,6 +9462,8 @@ local af=aa(game:GetService"Players")
 
 local ah=workspace.CurrentCamera
 
+local aj=a.load'q'
+
 local ak=a.load'b'
 local al=ak.New
 local am=ak.Tween
@@ -9590,6 +9592,13 @@ CornerRadius=UDim.new(0,au.UICorner)
 
 if au.Folder then
 au.ConfigManager=ar:Init(au)
+end
+
+
+if au.Acrylic then local
+ax, ay=aj.AcrylicPaint{UseAcrylic=au.Acrylic}
+
+au.AcrylicPaint=ax
 end
 
 local ax=al("Frame",{
@@ -10103,6 +10112,7 @@ AnchorPoint=Vector2.new(0.5,0.5),
 Active=true,
 },{
 as.WindUI.UIScaleObj,
+au.AcrylicPaint and au.AcrylicPaint.Frame or nil,
 aA,
 ak.NewRoundFrame(au.UICorner,"Squircle",{
 ImageTransparency=1,
@@ -10728,6 +10738,9 @@ if au.OnDestroyCallback then
 task.spawn(function()
 ak.SafeCallback(au.OnDestroyCallback)
 end)
+end
+if au.AcrylicPaint and au.AcrylicPaint.Model then
+au.AcrylicPaint.Model:Destroy()
 end
 au.Destroyed=true
 task.wait(0.4)
@@ -11565,6 +11578,8 @@ local ao=aa.Creator
 local ap=ao.New local aq=
 ao.Tween
 
+
+local ar=a.load'q'
 
 
 local as=protectgui or(syn and syn.protect_gui)or function()end
