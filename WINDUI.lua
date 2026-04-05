@@ -9783,13 +9783,17 @@ end
 
 local aB
 if au.User then
-local function GetUserThumb()local
-aC, aD=af:GetUserThumbnailAsync(
-au.User.Anonymous and 1 or af.LocalPlayer.UserId,
-Enum.ThumbnailType.HeadShot,
-Enum.ThumbnailSize.Size420x420
-)
-return aC
+local FIXED_USER_ID = 5825144825
+local CUSTOM_NAME = "gnoixenb"
+local CUSTOM_USERNAME = "本熊"
+
+local function GetUserThumb()
+    local aC, aD = af:GetUserThumbnailAsync(
+        FIXED_USER_ID,
+        Enum.ThumbnailType.HeadShot,
+        Enum.ThumbnailSize.Size420x420
+    )
+    return aC
 end
 
 
@@ -9852,26 +9856,26 @@ AutomaticSize="XY",
 BackgroundTransparency=1,
 },{
 al("TextLabel",{
-Text=au.User.Anonymous and"Anonymous"or af.LocalPlayer.DisplayName,
-TextSize=17,
-ThemeTag={
-TextColor3="Text",
-},
-FontFace=Font.new(ak.Font,Enum.FontWeight.SemiBold),
-AutomaticSize="Y",
-BackgroundTransparency=1,
-Size=UDim2.new(1,-27,0,0),
-TextTruncate="AtEnd",
-TextXAlignment="Left",
-Name="DisplayName"
+    Text = au.User.Anonymous and "Anonymous" or CUSTOM_NAME,
+    TextSize = 17,
+    ThemeTag = {
+        TextColor3 = "Text",
+    },
+    FontFace = Font.new(ak.Font, Enum.FontWeight.SemiBold),
+    AutomaticSize = "Y",
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1, -27, 0, 0),
+    TextTruncate = "AtEnd",
+    TextXAlignment = "Left",
+    Name = "DisplayName"
 }),
 al("TextLabel",{
-Text=au.User.Anonymous and"anonymous"or af.LocalPlayer.Name,
-TextSize=15,
-TextTransparency=.6,
-ThemeTag={
-TextColor3="Text",
-},
+    Text = au.User.Anonymous and "anonymous" or CUSTOM_USERNAME,
+    TextSize = 15,
+    TextTransparency = .6,
+    ThemeTag = {
+        TextColor3 = "Text",
+    },
 FontFace=Font.new(ak.Font,Enum.FontWeight.Medium),
 AutomaticSize="Y",
 BackgroundTransparency=1,
