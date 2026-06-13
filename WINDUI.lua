@@ -1,5 +1,3 @@
-
-
 local a a={cache={}, load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()local b=(cloneref or clonereference or function(b)return b end)
 
 local d=b(game:GetService"ReplicatedStorage":WaitForChild("GetIcons",99999):InvokeServer())
@@ -8856,12 +8854,12 @@ HorizontalAlignment="Right",
 
 local A={
 {
-Title="Cancel",
+Title="取消",
 Variant="Secondary",
 Callback=function()end
 },
 {
-Title="Apply",
+Title="应用",
 Icon="chevron-right",
 Variant="Primary",
 Callback=function()av(Color3.fromHSV(aw.Hue,aw.Sat,aw.Vib),aw.Transparency)end
@@ -10680,7 +10678,7 @@ Icons=a.load'Y',
 
 local ao=ah("TextBox",{
 Text="",
-PlaceholderText="Search...",
+PlaceholderText="搜索...",
 ThemeTag={
 PlaceholderColor3="Placeholder",
 TextColor3="Text",
@@ -11162,7 +11160,7 @@ end
 elseif au~=""then
 ah("TextLabel",{
 Size=UDim2.new(1,0,0,70),
-Text="No results found",
+Text="未找到结果",
 TextSize=16,
 ThemeTag={
 TextColor3="Text",
@@ -13054,11 +13052,11 @@ F=true
 au:SetToTheCenter()
 au:Dialog{
 
-Title="Close Window",
-Content="Do you want to close this window? You will not be able to open it again.",
+Title="关闭窗口",
+Content="您要关闭此窗口吗？您将无法再次打开它。",
 Buttons={
 {
-Title="Cancel",
+Title="取消",
 
 Callback=function()
 F=false
@@ -13066,7 +13064,7 @@ end,
 Variant="Secondary",
 },
 {
-Title="Close Window",
+Title="关闭窗口",
 
 Callback=function()
 F=false
@@ -13228,7 +13226,7 @@ local N=false
 
 
 
-local O=ao("Search","search",au.UIElements.SideBarContainer,true)
+local O=ao("搜索","search",au.UIElements.SideBarContainer,true)
 O.Size=UDim2.new(1,-au.UIPadding/2,0,39)
 O.Position=UDim2.new(0,au.UIPadding/2,0,0)
 
