@@ -1,3 +1,5 @@
+
+
 local a a={cache={}, load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()local b=(cloneref or clonereference or function(b)return b end)
 
 local d=b(game:GetService"ReplicatedStorage":WaitForChild("GetIcons",99999):InvokeServer())
@@ -1303,6 +1305,8 @@ Buttons=g.Buttons or{},
 CanClose=g.CanClose~=false,
 UIElements={},
 Closed=false,
+SoundId = g.SoundId,
+SoundVolume = g.SoundVolume or 1,
 }
 
 
@@ -1310,7 +1314,16 @@ Closed=false,
 f.NotificationIndex=f.NotificationIndex+1
 f.Notifications[f.NotificationIndex]=h
 
-
+if h.SoundId then
+    local sound = Instance.new("Sound")
+    sound.SoundId = h.SoundId
+    sound.Volume = h.SoundVolume
+    sound.Parent = game:GetService("SoundService")
+    sound:Play()
+    sound.Ended:Connect(function()
+        sound:Destroy()
+    end)
+end
 
 
 
