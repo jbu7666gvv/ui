@@ -1,5 +1,3 @@
-print("UI加载成功")
-
 local a a={cache={}, load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()local b=(cloneref or clonereference or function(b)return b end)
 
 local d=b(game:GetService"ReplicatedStorage":WaitForChild("GetIcons",99999):InvokeServer())
@@ -13279,27 +13277,37 @@ end
 end
 
 function au:SetBackgroundVideo(videoUrl, transparency)
-  
+    if not videoUrl or videoUrl == "" then
+        warn("[WindUI] 背景视频链接为空，跳过设置")
+        return nil
+    end
+
     self.Background = "video:" .. videoUrl
-    
-    
+
     if aF and aF.Parent then
         aF:Destroy()
+        aF = nil
     end
     if self.ImageBackground then
         self.ImageBackground:Destroy()
         self.ImageBackground = nil
     end
-    
+
     local videoPath = videoUrl
-    
-    
+
     if string.find(videoUrl, "http") then
         local fileName = self.Folder.."/assets/."..al.SanitizeFilename(videoUrl)..".webm"
-        
-        
-        if not isfile(fileName) then
-            local downloadSuccess, downloadErr = pcall(function()
+
+        local fileExists = false
+        if isfile then
+            local success, result = pcall(function()
+                return isfile(fileName)
+            end)
+            fileExists = success and result
+        end
+
+        if not fileExists then
+            local downloadSuccess, downloadResult = pcall(function()
                 local request = al.Request or syn and syn.request or http_request
                 if request then
                     local response = request({
@@ -13307,77 +13315,97 @@ function au:SetBackgroundVideo(videoUrl, transparency)
                         Method = "GET",
                         Headers = {["User-Agent"] = "Roblox/Exploit"}
                     })
-                    if response and response.Body then
-                        writefile(fileName, response.Body)
+                    if response and response.Body and response.Body ~= "" then
+                        if writefile then
+                            local writeSuccess, writeErr = pcall(function()
+                                writefile(fileName, response.Body)
+                            end)
+                            if not writeSuccess then
+                                warn("[WindUI] 写入视频文件失败:", writeErr)
+                            end
+                        else
+                            warn("[WindUI] writefile 函数不可用")
+                        end
+                        return response.Body
+                    else
+                        warn("[WindUI] 下载视频响应 Body 为空")
+                        return nil
                     end
+                else
+                    warn("[WindUI] 没有可用的 HTTP 请求函数")
+                    return nil
                 end
             end)
-            
-            if not downloadSuccess then
-                warn("[ WindUI.Window.Background ] Failed to download video: "..tostring(downloadErr))
-                return
+
+            if not downloadSuccess or not downloadResult then
+                warn("[WindUI] 视频下载失败，跳过背景设置")
+                return nil
             end
         end
-        
-        
+
         local loadSuccess, assetPath = pcall(function()
             return getcustomasset(fileName)
         end)
-        
-        if not loadSuccess then
-            warn("[ WindUI.Window.Background ] Failed to load custom asset: "..tostring(assetPath))
-            return
+        if loadSuccess and assetPath then
+            videoPath = assetPath
+        else
+            warn("[WindUI] 加载视频自定义资源失败，跳过背景设置")
+            return nil
         end
-        
-        warn("[ WindUI.Window.Background ] VideoFrame may not work with custom video")
-        videoPath = assetPath
     end
 
-    aF = am("VideoFrame", {
+    aF = al("VideoFrame", {
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, 0),
         Video = videoPath,
         Looped = true,
         Volume = 0,
     }, {
-        am("UICorner", {
+        al("UICorner", {
             CornerRadius = UDim.new(0, self.UICorner or 16)
         }),
     })
-    
-    
+
     aF.Parent = self.UIElements.Main.Background
-    
-    
     aF:Play()
-    
-    
+
     if self.DragButton then
         self.DragButton.Parent = self.UIElements.Main
     end
-    
+
     return aF
 end
 
 function au:SetBackgroundImage(imageUrl, transparency)
-    
+    if not imageUrl or imageUrl == "" then
+        warn("[WindUI] 背景图片链接为空，跳过设置")
+        return nil
+    end
+
     if aF and aF.Parent then
         aF:Destroy()
+        aF = nil
     end
     if self.ImageBackground then
         self.ImageBackground:Destroy()
         self.ImageBackground = nil
     end
-    
+
     local imagePath = imageUrl
-    
-    
     if string.find(imageUrl, "http") then
         local ext = imageUrl:match("%.([%w]+)$") or "png"
         local fileName = self.Folder.."/assets/."..al.SanitizeFilename(imageUrl).."."..ext
-        
-        if not isfile(fileName) then
-            local downloadSuccess, downloadErr = pcall(function()
+
+        local fileExists = false
+        if isfile then
+            local success, result = pcall(function()
+                return isfile(fileName)
+            end)
+            fileExists = success and result
+        end
+
+        if not fileExists then
+            local downloadSuccess, downloadResult = pcall(function()
                 local request = al.Request or syn and syn.request or http_request
                 if request then
                     local response = request({
@@ -13385,53 +13413,65 @@ function au:SetBackgroundImage(imageUrl, transparency)
                         Method = "GET",
                         Headers = {["User-Agent"] = "Roblox/Exploit"}
                     })
-                    if response and response.Body then
-                        writefile(fileName, response.Body)
+                    if response and response.Body and response.Body ~= "" then
+                        if writefile then
+                            local writeSuccess, writeErr = pcall(function()
+                                writefile(fileName, response.Body)
+                            end)
+                            if not writeSuccess then
+                                warn("[WindUI] 写入图片文件失败:", writeErr)
+                            end
+                        else
+                            warn("[WindUI] writefile 函数不可用")
+                        end
+                        return response.Body
+                    else
+                        warn("[WindUI] 下载图片响应 Body 为空")
+                        return nil
                     end
+                else
+                    warn("[WindUI] 没有可用的 HTTP 请求函数")
+                    return nil
                 end
             end)
-            
-            if not downloadSuccess then
-                warn("[ Window.Background ] Failed to download image: "..tostring(downloadErr))
-                return
+
+            if not downloadSuccess or not downloadResult then
+                warn("[WindUI] 图片下载失败，跳过背景设置")
+                return nil
             end
         end
-        
+
         local loadSuccess, assetPath = pcall(function()
             return getcustomasset(fileName)
         end)
-        
-        if not loadSuccess then
-            warn("[ Window.Background ] Failed to load custom asset: "..tostring(assetPath))
-            return
+        if loadSuccess and assetPath then
+            imagePath = assetPath
+        else
+            warn("[WindUI] 加载图片自定义资源失败，跳过背景设置")
+            return nil
         end
-        
-        imagePath = assetPath
     end
 
-    self.ImageBackground = am("ImageLabel", {
+    self.ImageBackground = al("ImageLabel", {
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, 0),
         Image = imagePath,
         ImageTransparency = transparency or 0,
         ScaleType = "Crop",
     }, {
-        am("UICorner", {
+        al("UICorner", {
             CornerRadius = UDim.new(0, self.UICorner or 16)
         }),
     })
-    
+
     self.ImageBackground.Parent = self.UIElements.Main.Background
-    
-    
     self.Background = imageUrl
     self.BackgroundImageTransparency = transparency or 0
-    
-    
+
     if self.DragButton then
         self.DragButton.Parent = self.UIElements.Main
     end
-    
+
     return self.ImageBackground
 end
 
