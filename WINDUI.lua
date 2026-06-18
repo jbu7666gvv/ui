@@ -1,3 +1,5 @@
+
+
 local a a={cache={}, load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()local b=(cloneref or clonereference or function(b)return b end)
 
 local d=b(game:GetService"ReplicatedStorage":WaitForChild("GetIcons",99999):InvokeServer())
@@ -13278,79 +13280,89 @@ end
 
 function au:SetBackgroundVideo(videoUrl, transparency)
     if not videoUrl or videoUrl == "" then
-        warn("[WindUI] 背景视频链接为空，跳过设置")
+        warn("[WindUI] 背景视频 URL 为空，跳过")
         return nil
     end
 
     self.Background = "video:" .. videoUrl
 
     if aF and aF.Parent then
-        aF:Destroy()
+        pcall(function() aF:Destroy() end)
         aF = nil
     end
     if self.ImageBackground then
-        self.ImageBackground:Destroy()
+        pcall(function() self.ImageBackground:Destroy() end)
         self.ImageBackground = nil
     end
 
     local videoPath = videoUrl
+    local useLocalCache = false
 
     if string.find(videoUrl, "http") then
         local fileName = self.Folder.."/assets/."..al.SanitizeFilename(videoUrl)..".webm"
+        local canUseFileSystem = type(writefile) == "function" and type(isfile) == "function" and type(getcustomasset) == "function"
 
-        local fileExists = false
-        if isfile then
-            local success, result = pcall(function()
-                return isfile(fileName)
+        if canUseFileSystem then
+            local fileExists = false
+            local checkSuccess = pcall(function()
+                fileExists = isfile(fileName)
             end)
-            fileExists = success and result
-        end
 
-        if not fileExists then
-            local downloadSuccess, downloadResult = pcall(function()
-                local request = al.Request or syn and syn.request or http_request
-                if request then
-                    local response = request({
-                        Url = videoUrl,
-                        Method = "GET",
-                        Headers = {["User-Agent"] = "Roblox/Exploit"}
-                    })
-                    if response and response.Body and response.Body ~= "" then
-                        if writefile then
-                            local writeSuccess, writeErr = pcall(function()
+            if not checkSuccess then
+                warn("[WindUI] isfile 检查失败，将直接使用 URL")
+            elseif fileExists then
+                local loadSuccess, assetPath = pcall(function()
+                    return getcustomasset(fileName)
+                end)
+                if loadSuccess and assetPath then
+                    videoPath = assetPath
+                    useLocalCache = true
+                else
+                    warn("[WindUI] 加载缓存视频失败，将直接使用 URL")
+                end
+            else
+                local downloadSuccess, downloadResult = pcall(function()
+                    local request = al.Request or syn and syn.request or http_request
+                    if request then
+                        local response = request({
+                            Url = videoUrl,
+                            Method = "GET",
+                            Headers = {["User-Agent"] = "Roblox/Exploit"}
+                        })
+                        if response and response.Body and response.Body ~= "" then
+                            local writeSuccess = pcall(function()
                                 writefile(fileName, response.Body)
                             end)
-                            if not writeSuccess then
-                                warn("[WindUI] 写入视频文件失败:", writeErr)
+                            if writeSuccess then
+                                return true
+                            else
+                                warn("[WindUI] 写入视频文件失败，将直接使用 URL")
+                                return false
                             end
                         else
-                            warn("[WindUI] writefile 函数不可用")
+                            warn("[WindUI] 下载视频响应 Body 为空，将直接使用 URL")
+                            return false
                         end
-                        return response.Body
                     else
-                        warn("[WindUI] 下载视频响应 Body 为空")
-                        return nil
+                        warn("[WindUI] 没有可用的 HTTP 请求函数")
+                        return false
                     end
-                else
-                    warn("[WindUI] 没有可用的 HTTP 请求函数")
-                    return nil
+                end)
+
+                if downloadSuccess and downloadResult then
+                    local loadSuccess, assetPath = pcall(function()
+                        return getcustomasset(fileName)
+                    end)
+                    if loadSuccess and assetPath then
+                        videoPath = assetPath
+                        useLocalCache = true
+                    else
+                        warn("[WindUI] 加载下载的视频失败，将直接使用 URL")
+                    end
                 end
-            end)
-
-            if not downloadSuccess or not downloadResult then
-                warn("[WindUI] 视频下载失败，跳过背景设置")
-                return nil
             end
-        end
-
-        local loadSuccess, assetPath = pcall(function()
-            return getcustomasset(fileName)
-        end)
-        if loadSuccess and assetPath then
-            videoPath = assetPath
         else
-            warn("[WindUI] 加载视频自定义资源失败，跳过背景设置")
-            return nil
+            warn("[WindUI] 文件系统函数不可用，将直接使用 URL")
         end
     end
 
@@ -13378,77 +13390,88 @@ end
 
 function au:SetBackgroundImage(imageUrl, transparency)
     if not imageUrl or imageUrl == "" then
-        warn("[WindUI] 背景图片链接为空，跳过设置")
+        warn("[WindUI] 背景图片 URL 为空，跳过")
         return nil
     end
 
     if aF and aF.Parent then
-        aF:Destroy()
+        pcall(function() aF:Destroy() end)
         aF = nil
     end
     if self.ImageBackground then
-        self.ImageBackground:Destroy()
+        pcall(function() self.ImageBackground:Destroy() end)
         self.ImageBackground = nil
     end
 
     local imagePath = imageUrl
+    local useLocalCache = false
+
     if string.find(imageUrl, "http") then
         local ext = imageUrl:match("%.([%w]+)$") or "png"
         local fileName = self.Folder.."/assets/."..al.SanitizeFilename(imageUrl).."."..ext
+        local canUseFileSystem = type(writefile) == "function" and type(isfile) == "function" and type(getcustomasset) == "function"
 
-        local fileExists = false
-        if isfile then
-            local success, result = pcall(function()
-                return isfile(fileName)
+        if canUseFileSystem then
+            local fileExists = false
+            local checkSuccess = pcall(function()
+                fileExists = isfile(fileName)
             end)
-            fileExists = success and result
-        end
 
-        if not fileExists then
-            local downloadSuccess, downloadResult = pcall(function()
-                local request = al.Request or syn and syn.request or http_request
-                if request then
-                    local response = request({
-                        Url = imageUrl,
-                        Method = "GET",
-                        Headers = {["User-Agent"] = "Roblox/Exploit"}
-                    })
-                    if response and response.Body and response.Body ~= "" then
-                        if writefile then
-                            local writeSuccess, writeErr = pcall(function()
+            if not checkSuccess then
+                warn("[WindUI] isfile 检查失败，将直接使用 URL")
+            elseif fileExists then
+                local loadSuccess, assetPath = pcall(function()
+                    return getcustomasset(fileName)
+                end)
+                if loadSuccess and assetPath then
+                    imagePath = assetPath
+                    useLocalCache = true
+                else
+                    warn("[WindUI] 加载缓存图片失败，将直接使用 URL")
+                end
+            else
+                local downloadSuccess, downloadResult = pcall(function()
+                    local request = al.Request or syn and syn.request or http_request
+                    if request then
+                        local response = request({
+                            Url = imageUrl,
+                            Method = "GET",
+                            Headers = {["User-Agent"] = "Roblox/Exploit"}
+                        })
+                        if response and response.Body and response.Body ~= "" then
+                            local writeSuccess = pcall(function()
                                 writefile(fileName, response.Body)
                             end)
-                            if not writeSuccess then
-                                warn("[WindUI] 写入图片文件失败:", writeErr)
+                            if writeSuccess then
+                                return true
+                            else
+                                warn("[WindUI] 写入图片文件失败，将直接使用 URL")
+                                return false
                             end
                         else
-                            warn("[WindUI] writefile 函数不可用")
+                            warn("[WindUI] 下载图片响应 Body 为空，将直接使用 URL")
+                            return false
                         end
-                        return response.Body
                     else
-                        warn("[WindUI] 下载图片响应 Body 为空")
-                        return nil
+                        warn("[WindUI] 没有可用的 HTTP 请求函数")
+                        return false
                     end
-                else
-                    warn("[WindUI] 没有可用的 HTTP 请求函数")
-                    return nil
+                end)
+
+                if downloadSuccess and downloadResult then
+                    local loadSuccess, assetPath = pcall(function()
+                        return getcustomasset(fileName)
+                    end)
+                    if loadSuccess and assetPath then
+                        imagePath = assetPath
+                        useLocalCache = true
+                    else
+                        warn("[WindUI] 加载下载的图片失败，将直接使用 URL")
+                    end
                 end
-            end)
-
-            if not downloadSuccess or not downloadResult then
-                warn("[WindUI] 图片下载失败，跳过背景设置")
-                return nil
             end
-        end
-
-        local loadSuccess, assetPath = pcall(function()
-            return getcustomasset(fileName)
-        end)
-        if loadSuccess and assetPath then
-            imagePath = assetPath
         else
-            warn("[WindUI] 加载图片自定义资源失败，跳过背景设置")
-            return nil
+            warn("[WindUI] 文件系统函数不可用，将直接使用 URL")
         end
     end
 
