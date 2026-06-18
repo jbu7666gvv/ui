@@ -1,5 +1,3 @@
-
-
 local a a={cache={}, load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()local b=(cloneref or clonereference or function(b)return b end)
 
 local d=b(game:GetService"ReplicatedStorage":WaitForChild("GetIcons",99999):InvokeServer())
@@ -11704,120 +11702,21 @@ local d
 local f=false
 local g
 
-local h=typeof(au.Background)=="string"and string.match(au.Background,"^video:(.+)")or nil
-local j=typeof(au.Background)=="string"
-and not h
-and string.match(au.Background,"^https?://.+")
-or nil
+local pendingImage = nil
+local pendingVideo = nil
 
-local function GetImageExtension(l)
-local m=l:match"%.(%w+)$"or l:match"%.(%w+)%?"
-if m then
-m=m:lower()
-if m=="jpg"or m=="jpeg"or m=="png"or m=="webp"then
-return"."..m
-end
-end
-return".png"
-end
+local h = typeof(au.Background)=="string" and string.match(au.Background,"^video:(.+)") or nil
+local j = typeof(au.Background)=="string" and not h and string.match(au.Background,"^https?://.+") or nil
 
-if typeof(au.Background)=="string"and h then
-f=true
-
-if string.find(h,"http")then
-local l=au.Folder.."/assets/."..al.SanitizeFilename(h)..".webm"
-if not isfile(l)then
-local m,p=pcall(function()
-
-
-
-
-
-local m=game.HttpGet and game:HttpGet(h)
-writefile(l,m.Body)
-end)
-if not m then
-warn("[ WindUI.Window.Background ] Failed to download video: "..tostring(p))
-return
-end
-end
-
-local m,p=pcall(function()
-return getcustomasset(l)
-end)
-if not m then
-warn("[ WindUI.Window.Background ] Failed to load custom asset: "..tostring(p))
-return
-end
-warn"[ WindUI.Window.Background ] VideoFrame may not work with custom video"
-h=p
-end
-
-g=am("VideoFrame",{
-BackgroundTransparency=1,
-Size=UDim2.new(1,0,1,0),
-Video=h,
-Looped=true,
-Volume=0,
-},{
-am("UICorner",{
-CornerRadius=UDim.new(0,au.UICorner),
-}),
-})
-g:Play()
+if typeof(au.Background)=="string" and h then
+    pendingVideo = h
 elseif j then
-local l=au.Folder
-.."/assets/."
-..al.SanitizeFilename(j)
-..GetImageExtension(j)
-if isfile and not isfile(l)then
-local m,p=pcall(function()
-
-
-
-
-
-local m=game.HttpGet and game:HttpGet(j)
-writefile(l,m.Body)
-end)
-if not m then
-warn("[ Window.Background ] Failed to download image: "..tostring(p))
-return
-end
-end
-
-local m,p=pcall(function()
-return getcustomasset(l)
-end)
-if not m then
-warn("[ Window.Background ] Failed to load custom asset: "..tostring(p))
-return
-end
-
-g=am("ImageLabel",{
-BackgroundTransparency=1,
-Size=UDim2.new(1,0,1,0),
-Image=p,
-ImageTransparency=0,
-ScaleType="Crop",
-},{
-am("UICorner",{
-CornerRadius=UDim.new(0,au.UICorner),
-}),
-})
+    pendingImage = j
 elseif au.Background then
-g=am("ImageLabel",{
-BackgroundTransparency=1,
-Size=UDim2.new(1,0,1,0),
-Image=typeof(au.Background)=="string"and au.Background or"",
-ImageTransparency=1,
-ScaleType="Crop",
-},{
-am("UICorner",{
-CornerRadius=UDim.new(0,au.UICorner),
-}),
-})
+    pendingImage = au.Background
 end
+
+local g = nil
 
 local l=al.NewRoundFrame(99,"Squircle",{
 ImageTransparency=0.8,
@@ -13498,28 +13397,16 @@ function au:SetBackgroundImage(imageUrl, transparency)
     return self.ImageBackground
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+if pendingVideo then
+    pcall(function()
+        au:SetBackgroundVideo(pendingVideo, 0)
+    end)
+end
+if pendingImage then
+    pcall(function()
+        au:SetBackgroundImage(pendingImage, 0)
+    end)
+end
 
 
 return au
