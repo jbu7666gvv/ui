@@ -9595,12 +9595,12 @@ end)
 
 local F={
 {
-Title="Cancel",
+Title="取消",
 Variant="Secondary",
 Callback=function()end,
 },
 {
-Title="Apply",
+Title="应用",
 
 Variant="Primary",
 Callback=function()
@@ -11979,7 +11979,7 @@ Icons=a.load'ab',
 
 local aq=ak("TextBox",{
 Text="",
-PlaceholderText="Search...",
+PlaceholderText="搜索...",
 ThemeTag={
 PlaceholderColor3="Placeholder",
 TextColor3="Text",
@@ -14447,11 +14447,11 @@ J=true
 
 aw:Dialog{
 
-Title="Close Window",
-Content="Do you want to close this window? You will not be able to open it again.",
+Title="关闭窗口",
+Content="您要关闭此窗口吗？您将无法再次打开它。",
 Buttons={
 {
-Title="Cancel",
+Title="取消",
 
 Callback=function()
 J=false
@@ -14459,7 +14459,7 @@ end,
 Variant="Secondary",
 },
 {
-Title="Close Window",
+Title="关闭窗口",
 
 Callback=function()
 J=false
