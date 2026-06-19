@@ -8197,7 +8197,7 @@ ap.Tabs={}
 
 if ap.SearchBarEnabled then
 if not au then
-au=aj("Search...","search",ap.UIElements.Menu,nil,function(ax)
+au=aj("搜索...","search",ap.UIElements.Menu,nil,function(ax)
 for ay,az in next,ap.Tabs do
 if string.find(string.lower(az.Name),string.lower(ax),1,true)then
 az.UIElements.TabItem.Visible=true
@@ -14640,7 +14640,7 @@ local R=false
 
 
 
-local S=aq("Search","search",aw.UIElements.SideBarContainer,true)
+local S=aq("搜索","search",aw.UIElements.SideBarContainer,true)
 S.Size=UDim2.new(1,-aw.UIPadding/2,0,39)
 S.Position=UDim2.new(0,aw.UIPadding/2,0,0)
 
@@ -15041,6 +15041,12 @@ local d=aa.Themes[aA.Theme or"Dark"]
 
 
 as.SetTheme(d)
+
+if aw.ElementTransparency ~= nil then
+    d.ElementBackgroundTransparency = aw.ElementTransparency
+    d.PanelBackgroundTransparency = aw.ElementTransparency
+    d.LabelBackgroundTransparency = aw.ElementTransparency
+end
 
 local f=gethwid or function()
 return ak.LocalPlayer.UserId
