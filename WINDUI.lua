@@ -15037,15 +15037,17 @@ end
 
 local b=true
 
-local d=aa.Themes[aA.Theme or"Dark"]
-
-
+local d = aa.Themes[aA.Theme or "Dark"]
 as.SetTheme(d)
 
-if aw.ElementTransparency ~= nil then
-    d.ElementBackgroundTransparency = aw.ElementTransparency
-    d.PanelBackgroundTransparency = aw.ElementTransparency
-    d.LabelBackgroundTransparency = aw.ElementTransparency
+if aA.ElementTransparency ~= nil then
+    if type(d) == "table" then
+        d.ElementBackgroundTransparency = aA.ElementTransparency
+        d.PanelBackgroundTransparency = aA.ElementTransparency
+        d.LabelBackgroundTransparency = aA.ElementTransparency
+    else
+        warn("[WindUI] ElementTransparency requires a theme table, but got " .. type(d))
+    end
 end
 
 local f=gethwid or function()
