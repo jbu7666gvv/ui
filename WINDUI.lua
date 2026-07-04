@@ -12947,7 +12947,7 @@ end
 elseif aw~=""then
 ak("TextLabel",{
 Size=UDim2.new(1,0,0,70),
-Text="No results found",
+Text="未找到结果",
 TextSize=16,
 ThemeTag={
 TextColor3="Text",
@@ -14935,11 +14935,11 @@ J=true
 
 aw:Dialog{
 
-Title="Close Window",
-Content="Do you want to close this window? You will not be able to open it again.",
+Title="关闭窗口",
+Content="您要关闭此窗口吗？您将无法再次打开它。",
 Buttons={
 {
-Title="Cancel",
+Title="取消",
 
 Callback=function()
 J=false
@@ -14947,7 +14947,7 @@ end,
 Variant="Secondary",
 },
 {
-Title="Close Window",
+Title="关闭窗口",
 
 Callback=function()
 J=false
@@ -15529,6 +15529,13 @@ local d=aa.Themes[aA.Theme or"Dark"]
 
 
 as.SetTheme(d)
+
+if aA.ElementTransparency ~= nil then
+    d.ElementBackgroundTransparency = aA.ElementTransparency
+    d.PanelBackgroundTransparency = aA.ElementTransparency
+    d.LabelBackgroundTransparency = aA.ElementTransparency
+    d.DropdownTabBackground = Color3.fromHex("#2A2A2C")
+end
 
 local f=gethwid or function()
 return ak.LocalPlayer.UserId
