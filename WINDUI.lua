@@ -5897,13 +5897,13 @@ end
 
 
 
-local as=aa.Image("lock","lock",0,ag.Window.Folder,"Lock",false)
+local as=aa.Image("lucide:crown","lucide:crown",0,ag.Window.Folder,"Lock",false)
 as.Size=UDim2.new(0,20,0,20)
 as.ImageLabel.ImageColor3=Color3.new(1,1,1)
 as.ImageLabel.ImageTransparency=0.4
 
 local at=ab("TextLabel",{
-Text="Locked",
+Text="VIP",
 TextSize=18,
 FontFace=Font.new(aa.Font,Enum.FontWeight.Medium),
 AutomaticSize="XY",
@@ -5923,7 +5923,7 @@ ZIndex=9999999,
 local av,aw=ac(ah.UICorner,"Squircle",{
 Size=UDim2.new(1,0,1,0),
 ImageTransparency=0.25,
-ImageColor3=Color3.new(0,0,0),
+ImageColor3=Color3.fromHex("#FFD700"),
 Visible=false,
 Active=false,
 Parent=au,
