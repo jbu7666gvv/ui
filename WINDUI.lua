@@ -6241,7 +6241,7 @@ function ah.Lock(g,h)
 am=false
 av.Active=true
 av.Visible=true
-at.Text=h or"Locked"
+at.Text=h or"VIP"
 end
 
 function ah.Unlock(g)
