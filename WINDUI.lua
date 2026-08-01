@@ -1,3 +1,5 @@
+--v1.6.65  |  2026-07-01
+
 type ConfigType__DARKLUA_TYPE_a={
 Object:Instance,
 Camera:Instance?,
@@ -1695,14 +1697,14 @@ f.NotificationIndex=f.NotificationIndex+1
 f.Notifications[f.NotificationIndex]=h
 
 if h.SoundId then
-local sound = Instance.new("Sound")
-sound.SoundId = h.SoundId
-sound.Volume = h.SoundVolume
-sound.Parent = game:GetService("SoundService")
-sound:Play()
-sound.Ended:Connect(function()
-sound:Destroy()
-end)
+    local sound = Instance.new("Sound")
+    sound.SoundId = h.SoundId
+    sound.Volume = h.SoundVolume
+    sound.Parent = game:GetService("SoundService")
+    sound:Play()
+    sound.Ended:Connect(function()
+        sound:Destroy()
+    end)
 end
 
 
@@ -1714,6 +1716,10 @@ end
 local i
 
 if h.Icon then
+
+
+
+
 
 
 
@@ -5897,13 +5903,13 @@ end
 
 
 
-local as=aa.Image("lucide:crown","lucide:crown",0,ag.Window.Folder,"Lock",false)
+local as=aa.Image("lock","lock",0,ag.Window.Folder,"Lock",false)
 as.Size=UDim2.new(0,20,0,20)
 as.ImageLabel.ImageColor3=Color3.new(1,1,1)
 as.ImageLabel.ImageTransparency=0.4
 
 local at=ab("TextLabel",{
-Text="VIP",
+Text="Locked",
 TextSize=18,
 FontFace=Font.new(aa.Font,Enum.FontWeight.Medium),
 AutomaticSize="XY",
@@ -5923,7 +5929,7 @@ ZIndex=9999999,
 local av,aw=ac(ah.UICorner,"Squircle",{
 Size=UDim2.new(1,0,1,0),
 ImageTransparency=0.25,
-ImageColor3=Color3.fromHex("#FFD700"),
+ImageColor3=Color3.new(0,0,0),
 Visible=false,
 Active=false,
 Parent=au,
@@ -6241,7 +6247,7 @@ function ah.Lock(g,h)
 am=false
 av.Active=true
 av.Visible=true
-at.Text=h or"VIP"
+at.Text=h or"Locked"
 end
 
 function ah.Unlock(g)
@@ -12461,7 +12467,7 @@ Icons=a.load'ac',
 
 local aq=ak("TextBox",{
 Text="",
-PlaceholderText="搜索...",
+PlaceholderText="Search...",
 ThemeTag={
 PlaceholderColor3="Placeholder",
 TextColor3="Text",
@@ -12947,7 +12953,7 @@ end
 elseif aw~=""then
 ak("TextLabel",{
 Size=UDim2.new(1,0,0,70),
-Text="未找到结果",
+Text="No results found",
 TextSize=16,
 ThemeTag={
 TextColor3="Text",
@@ -14935,11 +14941,11 @@ J=true
 
 aw:Dialog{
 
-Title="关闭窗口",
-Content="您要关闭此窗口吗？您将无法再次打开它。",
+Title="Close Window",
+Content="Do you want to close this window? You will not be able to open it again.",
 Buttons={
 {
-Title="取消",
+Title="Cancel",
 
 Callback=function()
 J=false
@@ -14947,7 +14953,7 @@ end,
 Variant="Secondary",
 },
 {
-Title="关闭窗口",
+Title="Close Window",
 
 Callback=function()
 J=false
@@ -15128,7 +15134,7 @@ local R=false
 
 
 
-local S=aq("搜索","search",aw.UIElements.SideBarContainer,true)
+local S=aq("Search","search",aw.UIElements.SideBarContainer,true)
 S.Size=UDim2.new(1,-aw.UIPadding/2,0,39)
 S.Position=UDim2.new(0,aw.UIPadding/2,0,0)
 
@@ -15529,13 +15535,6 @@ local d=aa.Themes[aA.Theme or"Dark"]
 
 
 as.SetTheme(d)
-
-if aA.ElementTransparency ~= nil then
-    d.ElementBackgroundTransparency = aA.ElementTransparency
-    d.PanelBackgroundTransparency = aA.ElementTransparency
-    d.LabelBackgroundTransparency = aA.ElementTransparency
-    d.DropdownTabBackground = Color3.fromHex("#2A2A2C")
-end
 
 local f=gethwid or function()
 return ak.LocalPlayer.UserId
