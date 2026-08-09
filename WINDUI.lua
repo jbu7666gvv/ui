@@ -15134,7 +15134,7 @@ local R=false
 
 
 
-local S=aq("Search","search",aw.UIElements.SideBarContainer,true)
+local S=aq("搜索","search",aw.UIElements.SideBarContainer,true)
 S.Size=UDim2.new(1,-aw.UIPadding/2,0,39)
 S.Position=UDim2.new(0,aw.UIPadding/2,0,0)
 
@@ -15535,6 +15535,13 @@ local d=aa.Themes[aA.Theme or"Dark"]
 
 
 as.SetTheme(d)
+
+if aA.ElementTransparency ~= nil then
+    d.ElementBackgroundTransparency = aA.ElementTransparency
+    d.PanelBackgroundTransparency = aA.ElementTransparency
+    d.LabelBackgroundTransparency = aA.ElementTransparency
+    d.DropdownTabBackground = Color3.fromHex("#2A2A2C")
+end
 
 local f=gethwid or function()
 return ak.LocalPlayer.UserId
