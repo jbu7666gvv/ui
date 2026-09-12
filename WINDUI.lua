@@ -619,11 +619,7 @@ m.SetIconsType"lucide"
 
 local p
 
--- ============================================================
--- Cobalt 风格的自定义字体加载器
--- ============================================================
-
-local IsCustomAssetSafe            -- 探测结果缓存：nil = 未探测, true/false = 已探测
+local IsCustomAssetSafe
 local UseRawCustomAssetPaths = false
 local UsedRandomStrings = {}
 local AssetRandom = Random.new(tick())
@@ -631,7 +627,6 @@ local AssetRandom = Random.new(tick())
 local HttpService = game:GetService("HttpService")
 local TextService  = game:GetService("TextService")
 
--- ---------- 生成随机无扩展名文件名 ----------
 local function GenerateSafeUniqueRandomFileName(): string
     local Charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     while true do
@@ -658,7 +653,6 @@ local function GenerateSafeUniqueRandomFileName(): string
     end
 end
 
--- ---------- 把文件复制成随机文件名，再 getcustomasset ----------
 local function FetchRandomizedCustomContentId(Path: string): string?
     local RandomFileName = GenerateSafeUniqueRandomFileName()
 
@@ -675,19 +669,16 @@ local function FetchRandomizedCustomContentId(Path: string): string?
     return nil
 end
 
--- ---------- 核心：SafeFetchCustomContentId ----------
 local function SafeFetchCustomContentId(Path: string, FileName: string): string?
     if typeof(getcustomasset) ~= "function" then
         return nil
     end
 
-    --// 直接 getcustomasset 路径 \\--
     if UseRawCustomAssetPaths then
         local Success, Result = pcall(getcustomasset, Path)
         return if Success and typeof(Result) == "string" then Result else nil
     end
 
-    --// 安全检测 \\--
     local HasEstablishedSafety = typeof(IsCustomAssetSafe) == "boolean"
 
     if
@@ -697,27 +688,22 @@ local function SafeFetchCustomContentId(Path: string, FileName: string): string?
         local Success, Result = pcall(getcustomasset, Path)
         local IsValidResult = Success and typeof(Result) == "string"
 
-        --// 确定安全性 \\--
         if not HasEstablishedSafety then
             if IsValidResult then
-                -- 如果返回的 URI 里包含原始文件名 -> 不安全，需要 fallback
                 IsCustomAssetSafe = Result:lower():find(FileName:lower(), 1, true) == nil
             else
                 IsCustomAssetSafe = false
             end
         end
 
-        --// 安全则直接返回 \\--
         if IsValidResult and IsCustomAssetSafe then
             return Result
         end
     end
 
-    --// Fallback: 随机无扩展名文件 \\--
     return FetchRandomizedCustomContentId(Path)
 end
 
--- ---------- 下载 TTF ----------
 local function EnsureAssetFile(Url: string, FilePath: string): (boolean, string?)
     if isfile(FilePath) then
         return true
@@ -749,7 +735,6 @@ local function EnsureAssetFile(Url: string, FilePath: string): (boolean, string?
     return true
 end
 
--- ---------- 核心：解析字体 (完全照抄 Cobalt) ----------
 local function ResolveFont(Definition)
     local Name         = Definition.Name
     local FileName     = Definition.FileName
@@ -759,7 +744,6 @@ local function ResolveFont(Definition)
     local FallbackId   = Definition.FallbackId
     local Folder       = Definition.Folder
 
-    --// 确保 asset 文件存在 \\--
     local TTFPath = Folder .. "/" .. FileName
     local Exists, Error = EnsureAssetFile(Url, TTFPath)
     if not Exists then
@@ -770,7 +754,6 @@ local function ResolveFont(Definition)
         }
     end
 
-    --// 获取 ttf assetId \\--
     local TTFAssetId = SafeFetchCustomContentId(TTFPath, FileName)
     if not TTFAssetId then
         return {
@@ -780,7 +763,6 @@ local function ResolveFont(Definition)
         }
     end
 
-    --// 写 .font 文件 \\--
 local FontPath = Folder .. "/" .. FontFileName
 local Success, WriteError = pcall(writefile, FontPath, HttpService:JSONEncode({
     name = FamilyName,
@@ -800,7 +782,6 @@ local Success, WriteError = pcall(writefile, FontPath, HttpService:JSONEncode({
         }
     end
 
-    --// 获取 .font assetId \\--
     local FontAssetId = SafeFetchCustomContentId(FontPath, FontFileName)
     if not FontAssetId then
         return {
@@ -810,12 +791,11 @@ local Success, WriteError = pcall(writefile, FontPath, HttpService:JSONEncode({
         }
     end
 
-    --// Font.new \\--
     local Created, FontFace = pcall(Font.new, FontAssetId)
     if not Created then
         return {
             Value = FallbackId,
-            AssetId = nil,          -- ← 新增
+            AssetId = nil,
             Source = "Fallback",
             Error = tostring(FontFace),
         }
@@ -823,36 +803,28 @@ local Success, WriteError = pcall(writefile, FontPath, HttpService:JSONEncode({
 
     return {
         Value = FontFace,
-        AssetId = FontAssetId,      -- ← 新增：把 rbxasset:// 字符串也返回
+        AssetId = FontAssetId,
         Source = "Custom",
         Error = nil,
     }
 end
 
--- ---------- 你的字体定义 ----------
 local CustomFontDefinition = {
-    Name         = "CustomFont",            -- 内部标识
+    Name         = "CustomFont",
     FileName     = "1.ttf",
     FontFileName = "1.font",
-    FamilyName   = "CustomFont",            -- 写进 .font JSON 的 name
+    FamilyName   = "CustomFont",
     Url          = "https://raw.githubusercontent.com/jbu7666gvv/tu/main/1.ttf",
     FallbackId   = 11322590111,
     Folder       = "BHBUO",
 }
 
--- ---------- 创建目录 ----------
 if not isfolder(CustomFontDefinition.Folder) then
     makefolder(CustomFontDefinition.Folder)
 end
 
--- ---------- 执行 ----------
 local CustomFontResolution = ResolveFont(CustomFontDefinition)
 local CustomFont = CustomFontResolution.Value
-
-print("[BHBUO] Source :", CustomFontResolution.Source)
-print("[BHBUO] Error  :", CustomFontResolution.Error)
-print("[BHBUO] AssetId:", CustomFontResolution.AssetId)   -- ← 新增，关键
-print("[BHBUO] Font   :", CustomFont, typeof(CustomFont))
 
 local r
 r={
