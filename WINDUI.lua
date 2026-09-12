@@ -619,97 +619,244 @@ m.SetIconsType"lucide"
 
 local p
 
-local function SafeFetchCustomContentId(Path)
+-- ============================================================
+-- Cobalt 风格的自定义字体加载器
+-- ============================================================
+
+local IsCustomAssetSafe            -- 探测结果缓存：nil = 未探测, true/false = 已探测
+local UseRawCustomAssetPaths = false
+local UsedRandomStrings = {}
+local AssetRandom = Random.new(tick())
+
+local HttpService = game:GetService("HttpService")
+local TextService  = game:GetService("TextService")
+
+-- ---------- 生成随机无扩展名文件名 ----------
+local function GenerateSafeUniqueRandomFileName(): string
     local Charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    local RandomFileName
-    repeat
-        RandomFileName = ""
-        for _ = 1, math.random(4, 7) do
-            local i = math.random(1, #Charset)
-            RandomFileName ..= Charset:sub(i, i)
+    while true do
+        local RandomString = ""
+        for _ = 1, AssetRandom:NextInteger(4, 7) do
+            local RandomIndex = AssetRandom:NextInteger(1, #Charset)
+            RandomString ..= Charset:sub(RandomIndex, RandomIndex)
         end
-    until not (isfile(RandomFileName) or isfolder(RandomFileName))
 
-    local ok = pcall(function()
+        local FileName = RandomString
+        local Success, Exists = pcall(function()
+            return isfile(FileName) or isfolder(FileName)
+        end)
+
+        if Success and Exists then
+            continue
+        end
+        if UsedRandomStrings[FileName] then
+            continue
+        end
+
+        UsedRandomStrings[FileName] = true
+        return FileName
+    end
+end
+
+-- ---------- 把文件复制成随机文件名，再 getcustomasset ----------
+local function FetchRandomizedCustomContentId(Path: string): string?
+    local RandomFileName = GenerateSafeUniqueRandomFileName()
+
+    local Success, Result = pcall(function()
         writefile(RandomFileName, readfile(Path))
+        return getcustomasset(RandomFileName)
     end)
-    if not ok then return nil end
 
-    local success, Result = pcall(getcustomasset, RandomFileName)
     pcall(delfile, RandomFileName)
 
-    if success and typeof(Result) == "string" then
+    if Success and typeof(Result) == "string" then
         return Result
     end
     return nil
 end
 
-local function LoadCustomFont()
-    local FontUrl = "https://raw.githubusercontent.com/jbu7666gvv/tu/main/1.ttf"
-    local Folder = "BHBUO"
-    local FileName = "1.ttf"
-    local FontFileName = "1.font"
-    local FamilyName = "CustomFont"
-    local FallbackId = 11322590111
+-- ---------- 核心：SafeFetchCustomContentId ----------
+local function SafeFetchCustomContentId(Path: string, FileName: string): string?
+    if typeof(getcustomasset) ~= "function" then
+        return nil
+    end
 
-    if not isfolder(Folder) then makefolder(Folder) end
-    local TTFPath = Folder .. "/" .. FileName
-    local FontPath = Folder .. "/" .. FontFileName
+    --// 直接 getcustomasset 路径 \\--
+    if UseRawCustomAssetPaths then
+        local Success, Result = pcall(getcustomasset, Path)
+        return if Success and typeof(Result) == "string" then Result else nil
+    end
 
-    if not isfile(TTFPath) then
-        local request = request or http_request or (syn and syn.request)
-        if not request then
-            warn("[BHBUO] 无 HTTP 请求函数"); return FallbackId
+    --// 安全检测 \\--
+    local HasEstablishedSafety = typeof(IsCustomAssetSafe) == "boolean"
+
+    if
+        IsCustomAssetSafe or
+        not HasEstablishedSafety
+    then
+        local Success, Result = pcall(getcustomasset, Path)
+        local IsValidResult = Success and typeof(Result) == "string"
+
+        --// 确定安全性 \\--
+        if not HasEstablishedSafety then
+            if IsValidResult then
+                -- 如果返回的 URI 里包含原始文件名 -> 不安全，需要 fallback
+                IsCustomAssetSafe = Result:lower():find(FileName:lower(), 1, true) == nil
+            else
+                IsCustomAssetSafe = false
+            end
         end
-        local ok, response = pcall(request, { Url = FontUrl, Method = "GET" })
-        if not ok or not response or not response.Body then
-            warn("[BHBUO] 下载失败"); return FallbackId
+
+        --// 安全则直接返回 \\--
+        if IsValidResult and IsCustomAssetSafe then
+            return Result
         end
-        writefile(TTFPath, response.Body)
     end
 
-    local ttfAssetId = SafeFetchCustomContentId(TTFPath)
-    if not ttfAssetId then
-        warn("[BHBUO] 无法获取 ttf assetId"); return FallbackId
-    end
-    print("[BHBUO] ttf assetId =", ttfAssetId)
-
-    local fontJson = game:GetService("HttpService"):JSONEncode({
-        name = FamilyName,
-        faces = {
-            {
-                name = "Regular",
-                weight = 400,
-                style = "normal",
-                assetId = ttfAssetId,
-            },
-        },
-    })
-    writefile(FontPath, fontJson)
-
-    -- 关键：同样用无扩展名随机文件名获取 .font 的 assetId
-    local fontAssetId = SafeFetchCustomContentId(FontPath)
-    if not fontAssetId then
-        warn("[BHBUO] 无法获取 .font assetId"); return FallbackId
-    end
-    print("[BHBUO] font assetId =", fontAssetId)  -- 应该是无扩展名的
-
-    -- 加载
-    local ok3, fontResult = pcall(Font.fromId, fontAssetId, Enum.FontWeight.Regular, Enum.FontStyle.Normal)
-    if ok3 and fontResult then return fontResult end
-
-    local ok4, fontResult2 = pcall(Font.new, fontAssetId)
-    if ok4 and fontResult2 then return fontResult2 end
-
-    warn("[BHBUO] 加载字体失败")
-    return FallbackId
+    --// Fallback: 随机无扩展名文件 \\--
+    return FetchRandomizedCustomContentId(Path)
 end
 
-local CustomFont = LoadCustomFont()
+-- ---------- 下载 TTF ----------
+local function EnsureAssetFile(Url: string, FilePath: string): (boolean, string?)
+    if isfile(FilePath) then
+        return true
+    end
+
+    local requestFn = request or http_request or (syn and syn.request)
+    if not requestFn then
+        return false, "No HTTP request function available"
+    end
+
+    local Success, Response = pcall(requestFn, {
+        Url = Url,
+        Method = "GET",
+    })
+
+    if not Success then
+        return false, `Request failed: {Response}`
+    end
+
+    if not Response or not Response.Body then
+        return false, "Empty response body"
+    end
+
+    local WriteOk, WriteErr = pcall(writefile, FilePath, Response.Body)
+    if not WriteOk then
+        return false, tostring(WriteErr)
+    end
+
+    return true
+end
+
+-- ---------- 核心：解析字体 (完全照抄 Cobalt) ----------
+local function ResolveFont(Definition)
+    local Name         = Definition.Name
+    local FileName     = Definition.FileName
+    local FontFileName = Definition.FontFileName
+    local FamilyName   = Definition.FamilyName
+    local Url          = Definition.Url
+    local FallbackId   = Definition.FallbackId
+    local Folder       = Definition.Folder
+
+    --// 确保 asset 文件存在 \\--
+    local TTFPath = Folder .. "/" .. FileName
+    local Exists, Error = EnsureAssetFile(Url, TTFPath)
+    if not Exists then
+        return {
+            Value = FallbackId,
+            Source = "Fallback",
+            Error = Error,
+        }
+    end
+
+    --// 获取 ttf assetId \\--
+    local TTFAssetId = SafeFetchCustomContentId(TTFPath, FileName)
+    if not TTFAssetId then
+        return {
+            Value = FallbackId,
+            Source = "Fallback",
+            Error = `Failed to load {FileName} with getcustomasset`,
+        }
+    end
+
+    --// 写 .font 文件 \\--
+local FontPath = Folder .. "/" .. FontFileName
+local Success, WriteError = pcall(writefile, FontPath, HttpService:JSONEncode({
+    name = FamilyName,
+    faces = {
+        { name = "Regular",  weight = 400, style = "normal", assetId = TTFAssetId },
+        { name = "Medium",   weight = 500, style = "normal", assetId = TTFAssetId },
+        { name = "SemiBold", weight = 600, style = "normal", assetId = TTFAssetId },
+        { name = "Bold",     weight = 700, style = "normal", assetId = TTFAssetId },
+        { name = "Black",    weight = 900, style = "normal", assetId = TTFAssetId },
+    },
+}))
+    if not Success then
+        return {
+            Value = FallbackId,
+            Source = "Fallback",
+            Error = tostring(WriteError),
+        }
+    end
+
+    --// 获取 .font assetId \\--
+    local FontAssetId = SafeFetchCustomContentId(FontPath, FontFileName)
+    if not FontAssetId then
+        return {
+            Value = FallbackId,
+            Source = "Fallback",
+            Error = `Failed to load {FontFileName} with getcustomasset`,
+        }
+    end
+
+    --// Font.new \\--
+    local Created, FontFace = pcall(Font.new, FontAssetId)
+    if not Created then
+        return {
+            Value = FallbackId,
+            AssetId = nil,          -- ← 新增
+            Source = "Fallback",
+            Error = tostring(FontFace),
+        }
+    end
+
+    return {
+        Value = FontFace,
+        AssetId = FontAssetId,      -- ← 新增：把 rbxasset:// 字符串也返回
+        Source = "Custom",
+        Error = nil,
+    }
+end
+
+-- ---------- 你的字体定义 ----------
+local CustomFontDefinition = {
+    Name         = "CustomFont",            -- 内部标识
+    FileName     = "1.ttf",
+    FontFileName = "1.font",
+    FamilyName   = "CustomFont",            -- 写进 .font JSON 的 name
+    Url          = "https://raw.githubusercontent.com/jbu7666gvv/tu/main/1.ttf",
+    FallbackId   = 11322590111,
+    Folder       = "BHBUO",
+}
+
+-- ---------- 创建目录 ----------
+if not isfolder(CustomFontDefinition.Folder) then
+    makefolder(CustomFontDefinition.Folder)
+end
+
+-- ---------- 执行 ----------
+local CustomFontResolution = ResolveFont(CustomFontDefinition)
+local CustomFont = CustomFontResolution.Value
+
+print("[BHBUO] Source :", CustomFontResolution.Source)
+print("[BHBUO] Error  :", CustomFontResolution.Error)
+print("[BHBUO] AssetId:", CustomFontResolution.AssetId)   -- ← 新增，关键
+print("[BHBUO] Font   :", CustomFont, typeof(CustomFont))
 
 local r
 r={
-Font="CustomFont",
+Font = CustomFontResolution.AssetId or "CustomFont",
 Localization=nil,
 CanDraggable=true,
 Theme=nil,
