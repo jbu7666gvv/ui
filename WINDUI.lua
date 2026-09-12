@@ -619,9 +619,81 @@ m.SetIconsType"lucide"
 
 local p
 
+local function LoadCustomFont()
+    local FontUrl = "https://github.com/jbu7666gvv/tu/raw/refs/heads/main/1.ttf"
+    local Folder = "BHBUO"
+    local FileName = "1.ttf"
+    local FontFileName = "1.font"
+    local FamilyName = "CustomFont"
+    local FallbackId = 11322590111
+
+    if not isfolder(Folder) then
+        makefolder(Folder)
+    end
+
+    local TTFPath = Folder .. "/" .. FileName
+    local FontPath = Folder .. "/" .. FontFileName
+
+    if not isfile(TTFPath) then
+        local success, err = pcall(function()
+            local request = request or http_request or syn and syn.request
+            if not request then
+                error("没有可用的 HTTP 请求函数")
+            end
+            local response = request({
+                Url = FontUrl,
+                Method = "GET",
+            })
+            if response and response.Body then
+                writefile(TTFPath, response.Body)
+            else
+                error("下载失败，响应为空")
+            end
+        end)
+        if not success then
+            warn("[BHBUO] 字体下载失败: " .. tostring(err))
+            return FallbackId
+        end
+    end
+
+    local success2, err2 = pcall(function()
+        local ttfAssetId = getcustomasset(TTFPath)
+        local fontJson = HttpService:JSONEncode({
+            name = FamilyName,
+            faces = {
+                {
+                    name = "Regular",
+                    weight = 400,
+                    style = "normal",
+                    assetId = ttfAssetId,
+                },
+            },
+        })
+        writefile(FontPath, fontJson)
+    end)
+    if not success2 then
+        warn("[BHBUO] 生成字体文件失败: " .. tostring(err2))
+        return FallbackId
+    end
+
+    -- 3. 加载 .font 文件得到 FontFace
+    local success3, fontResult = pcall(function()
+        local fontAssetId = getcustomasset(FontPath)
+        return Font.new(fontAssetId)
+    end)
+    if success3 and fontResult then
+        return fontResult
+    else
+        warn("[BHBUO] 加载自定义字体失败: " .. tostring(fontResult))
+        return FallbackId
+    end
+end
+
+local CustomFont = LoadCustomFont()
+
 local r
 r={
-Font="rbxassetid://11322590111",
+Font="CustomFont",
 Localization=nil,
 CanDraggable=true,
 Theme=nil,
