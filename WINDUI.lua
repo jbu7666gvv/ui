@@ -658,7 +658,7 @@ local function LoadCustomFont()
 
     local success2, err2 = pcall(function()
         local ttfAssetId = getcustomasset(TTFPath)
-        local fontJson = HttpService:JSONEncode({
+        local fontJson = game:GetService("HttpService"):JSONEncode({
             name = FamilyName,
             faces = {
                 {
