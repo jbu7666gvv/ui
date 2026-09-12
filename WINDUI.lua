@@ -619,74 +619,90 @@ m.SetIconsType"lucide"
 
 local p
 
+local function SafeFetchCustomContentId(Path)
+    local Charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local RandomFileName
+    repeat
+        RandomFileName = ""
+        for _ = 1, math.random(4, 7) do
+            local i = math.random(1, #Charset)
+            RandomFileName ..= Charset:sub(i, i)
+        end
+    until not (isfile(RandomFileName) or isfolder(RandomFileName))
+
+    local ok = pcall(function()
+        writefile(RandomFileName, readfile(Path))
+    end)
+    if not ok then return nil end
+
+    local success, Result = pcall(getcustomasset, RandomFileName)
+    pcall(delfile, RandomFileName)
+
+    if success and typeof(Result) == "string" then
+        return Result
+    end
+    return nil
+end
+
 local function LoadCustomFont()
-    local FontUrl = "https://github.com/jbu7666gvv/tu/raw/refs/heads/main/1.ttf"
+    local FontUrl = "https://raw.githubusercontent.com/jbu7666gvv/tu/main/1.ttf"
     local Folder = "BHBUO"
     local FileName = "1.ttf"
     local FontFileName = "1.font"
     local FamilyName = "CustomFont"
     local FallbackId = 11322590111
 
-    if not isfolder(Folder) then
-        makefolder(Folder)
-    end
-
+    if not isfolder(Folder) then makefolder(Folder) end
     local TTFPath = Folder .. "/" .. FileName
     local FontPath = Folder .. "/" .. FontFileName
 
     if not isfile(TTFPath) then
-        local success, err = pcall(function()
-            local request = request or http_request or syn and syn.request
-            if not request then
-                error("没有可用的 HTTP 请求函数")
-            end
-            local response = request({
-                Url = FontUrl,
-                Method = "GET",
-            })
-            if response and response.Body then
-                writefile(TTFPath, response.Body)
-            else
-                error("下载失败，响应为空")
-            end
-        end)
-        if not success then
-            warn("[BHBUO] 字体下载失败: " .. tostring(err))
-            return FallbackId
+        local request = request or http_request or (syn and syn.request)
+        if not request then
+            warn("[BHBUO] 无 HTTP 请求函数"); return FallbackId
         end
+        local ok, response = pcall(request, { Url = FontUrl, Method = "GET" })
+        if not ok or not response or not response.Body then
+            warn("[BHBUO] 下载失败"); return FallbackId
+        end
+        writefile(TTFPath, response.Body)
     end
 
-    local success2, err2 = pcall(function()
-        local ttfAssetId = getcustomasset(TTFPath)
-        local fontJson = game:GetService("HttpService"):JSONEncode({
-            name = FamilyName,
-            faces = {
-                {
-                    name = "Regular",
-                    weight = 400,
-                    style = "normal",
-                    assetId = ttfAssetId,
-                },
+    local ttfAssetId = SafeFetchCustomContentId(TTFPath)
+    if not ttfAssetId then
+        warn("[BHBUO] 无法获取 ttf assetId"); return FallbackId
+    end
+    print("[BHBUO] ttf assetId =", ttfAssetId)
+
+    local fontJson = game:GetService("HttpService"):JSONEncode({
+        name = FamilyName,
+        faces = {
+            {
+                name = "Regular",
+                weight = 400,
+                style = "normal",
+                assetId = ttfAssetId,
             },
-        })
-        writefile(FontPath, fontJson)
-    end)
-    if not success2 then
-        warn("[BHBUO] 生成字体文件失败: " .. tostring(err2))
-        return FallbackId
-    end
+        },
+    })
+    writefile(FontPath, fontJson)
 
-    -- 3. 加载 .font 文件得到 FontFace
-    local success3, fontResult = pcall(function()
-        local fontAssetId = getcustomasset(FontPath)
-        return Font.new(fontAssetId)
-    end)
-    if success3 and fontResult then
-        return fontResult
-    else
-        warn("[BHBUO] 加载自定义字体失败: " .. tostring(fontResult))
-        return FallbackId
+    -- 关键：同样用无扩展名随机文件名获取 .font 的 assetId
+    local fontAssetId = SafeFetchCustomContentId(FontPath)
+    if not fontAssetId then
+        warn("[BHBUO] 无法获取 .font assetId"); return FallbackId
     end
+    print("[BHBUO] font assetId =", fontAssetId)  -- 应该是无扩展名的
+
+    -- 加载
+    local ok3, fontResult = pcall(Font.fromId, fontAssetId, Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+    if ok3 and fontResult then return fontResult end
+
+    local ok4, fontResult2 = pcall(Font.new, fontAssetId)
+    if ok4 and fontResult2 then return fontResult2 end
+
+    warn("[BHBUO] 加载字体失败")
+    return FallbackId
 end
 
 local CustomFont = LoadCustomFont()
