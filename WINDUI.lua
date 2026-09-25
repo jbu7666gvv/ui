@@ -14323,6 +14323,15 @@ local d=aa.Themes[aA.Theme or"Dark"]
 
 as.SetTheme(d)
 
+if aA.ElementTransparency ~= nil then
+    d.ElementBackgroundTransparency = aA.ElementTransparency
+    d.PanelBackgroundTransparency = aA.ElementTransparency
+    d.LabelBackgroundTransparency = aA.ElementTransparency
+    d.DropdownBackgroundTransparency = aA.ElementTransparency
+    d.DropdownTabBackgroundTransparency = aA.ElementTransparency
+    d.SectionBoxBackgroundTransparency = aA.ElementTransparency
+end
+
 local h=aB(aA)
 
 aa.Transparent=aA.Transparent
