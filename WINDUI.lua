@@ -561,7 +561,7 @@ SectionBoxTransparency=0.95,
 SectionBoxBorder="White",
 SectionBoxBorderTransparency=0.75,
 SectionBoxBackground="Text",
-SectionBoxBackgroundTransparency=0.97,
+SectionBoxBackgroundTransparency=0.5,
 
 SearchBarBorder="White",
 SearchBarBorderTransparency=0.75,
@@ -1340,12 +1340,6 @@ end
 function r.Tween(u,v,x,...)
 return f:Create(u,TweenInfo.new(v,...),x)
 end
-
-
-
-
-
-
 
 
 
