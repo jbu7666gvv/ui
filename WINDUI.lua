@@ -560,7 +560,7 @@ SectionBox="Text",
 SectionBoxTransparency=0.95,
 SectionBoxBorder="White",
 SectionBoxBorderTransparency=0.75,
-SectionBoxBackground="Text",
+SectionBoxBackground="ElementBackground",
 SectionBoxBackgroundTransparency=0.5,
 
 SearchBarBorder="White",
@@ -15832,17 +15832,6 @@ aa.Window=h
 if aA.Acrylic then
 au.init()
 end
-
-
-
-
-
-
-
-
-
-
-
 
 
 return h
