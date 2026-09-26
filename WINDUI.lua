@@ -597,7 +597,6 @@ end)
 local d=b(game:GetService"RunService")
 local e=b(game:GetService"UserInputService")
 local f=b(game:GetService"TweenService")
-local g=b(game:GetService"LocalizationService")
 local h=b(game:GetService"HttpService")
 
 local i=a.load'a'local j=
@@ -829,17 +828,14 @@ local CustomFont = CustomFontResolution.Value
 local r
 r={
 Font = CustomFontResolution.AssetId or "CustomFont",
-Localization=nil,
 CanDraggable=true,
 Theme=nil,
 Themes=nil,
 Icons=m,
 Signals={},
 Objects={},
-LocalizationObjects={},
 UIScale=1,
 FontObjects={},
-Language=string.match(g.SystemLocaleId,"^[a-z]+"),
 Request=http_request or(syn and syn.request)or request,
 DefaultProperties={
 ScreenGui={
@@ -1110,12 +1106,6 @@ end
 return u
 end
 
-function r.AddLangObject(u)
-local v=r.LocalizationObjects[u]
-if not v then
-return
-end
-
 local x=v.Object
 
 r.SetLangForObject(u)
@@ -1206,74 +1196,6 @@ r.AddThemeObject(u,v)
 r.UpdateTheme(u,false,true,x,z,A)
 end
 
-function r.SetLangForObject(u)
-if r.Localization and r.Localization.Enabled then
-local v=r.LocalizationObjects[u]
-if not v then
-return
-end
-
-local x=v.Object
-local z=v.TranslationId
-
-local A=r.Localization.Translations[r.Language]
-if A and A[z]then
-x.Text=A[z]
-else
-local B=r.Localization
-and r.Localization.Translations
-and r.Localization.Translations.en
-or nil
-if B and B[z]then
-x.Text=B[z]
-else
-x.Text="["..z.."]"
-end
-end
-end
-end
-
-function r.ChangeTranslationKey(u,v,x)
-if r.Localization and r.Localization.Enabled then
-local z=string.match(x,"^"..r.Localization.Prefix.."(.+)")
-if z then
-for A,B in ipairs(r.LocalizationObjects)do
-if B.Object==v then
-B.TranslationId=z
-r.SetLangForObject(A)
-return
-end
-end
-
-table.insert(r.LocalizationObjects,{
-TranslationId=z,
-Object=v,
-})
-r.SetLangForObject(#r.LocalizationObjects)
-end
-end
-end
-
-function r.UpdateLang(u)
-if u then
-r.Language=u
-end
-
-for v=1,#r.LocalizationObjects do
-local x=r.LocalizationObjects[v]
-if x.Object and x.Object.Parent~=nil then
-r.SetLangForObject(v)
-else
-r.LocalizationObjects[v]=nil
-end
-end
-end
-
-function r.SetLanguage(u)
-r.Language=u
-r.UpdateLang()
-end
-
 function r.Icon(u,v)
 return m.Icon2(u,nil,v~=false)
 end
@@ -1292,15 +1214,6 @@ end
 for A,B in next,v or{}do
 if A~="ThemeTag"then
 z[A]=B
-end
-if r.Localization and r.Localization.Enabled and A=="Text"then
-local C=string.match(B,"^"..r.Localization.Prefix.."(.+)")
-if C then
-local F=#r.LocalizationObjects+1
-r.LocalizationObjects[F]={TranslationId=C,Object=z}
-
-r.SetLangForObject(F)
-end
 end
 end
 
@@ -1780,32 +1693,7 @@ end
 return nil,4
 end
 
-return r end function a.e()
-
-local b={}
-
-
-
-
-
-
-
-function b.New(d,e,f)
-local g={
-Enabled=e.Enabled or false,
-Translations=e.Translations or{},
-Prefix=e.Prefix or"loc:",
-DefaultLanguage=e.DefaultLanguage or"en"
-}
-
-f.Localization=g
-
-return g
-end
-
-
-
-return b end function a.f()
+return r end function a.f()
 local b=a.load'd'
 local d=b.New
 local e=b.Tween
@@ -8224,19 +8112,8 @@ Size=UDim2.new(1,0,0,20+(aq.Padding*2)),
 Visible=al.Title and true or false,
 },{
 
-
-
-
-
-
-
-
-
-
 ag("TextLabel",{
 Text=al.Title,
-
-
 
 TextColor3=Color3.fromHex"#ffffff",
 TextTransparency=0.2,
@@ -8262,8 +8139,6 @@ VerticalAlignment="Center",
 })
 
 local ay,az=af.NewRoundFrame(aq.Radius,"Squircle",{
-
-
 
 ImageColor3=Color3.fromHex"#212121",
 ImageTransparency=0.035,
@@ -14016,7 +13891,6 @@ local aa={
 Window=nil,
 Theme=nil,
 Creator=a.load'd',
-LocalizationModule=a.load'e',
 NotificationModule=a.load'f',
 Themes=nil,
 Transparent=false,
@@ -14221,14 +14095,6 @@ end
 function aa.GetWindowSize(az)
 return aa.Window.UIElements.Main.Size
 end
-function aa.Localization(az,aA)
-return aa.LocalizationModule:New(aA,as)
-end
-
-function aa.SetLanguage(az,aA)
-if as.Localization then
-return as.SetLanguage(aA)
-end
 return false
 end
 
@@ -14292,7 +14158,6 @@ aa.Themes=a.load'v'(aa,as)
 as.Themes=aa.Themes
 
 aa:SetTheme"Dark"
-aa:SetLanguage(as.Language)
 
 function aa.CreateWindow(az,aA)
 local aB=a.load'ae'
