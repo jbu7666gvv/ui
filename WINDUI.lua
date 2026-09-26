@@ -10098,6 +10098,7 @@ Camera=an.Camera or Instance.new"Camera",
 Interactive=an.Interactive or false,
 Height=an.Height or 200,
 Focused=an.Focused~=false,
+DistanceMultiplier=an.DistanceMultiplier or 2,
 }
 
 local ap=false
@@ -10253,7 +10254,7 @@ local function FocusCamera()
 local av=ao.Object:IsA"BasePart"and ao.Object.Size
 or select(2,ao.Object:GetBoundingBox(0))
 local aw=math.max(av.X,av.Y,av.Z)
-local ax=aw*2
+local ax=aw*(ao.DistanceMultiplier or 2)
 local ay=ao.Object:GetPivot().Position
 
 ao.Camera.CFrame=
