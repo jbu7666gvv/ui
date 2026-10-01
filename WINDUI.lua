@@ -545,11 +545,6 @@ ProgressBarTrack="Text",
 ProgressBarTrackTransparency=0.9,
 ProgressBarText="Text",
 
-Tooltip=Color3.fromHex"4C4C4C",
-TooltipText="White",
-TooltipSecondary="Primary",
-TooltipSecondaryText="White",
-
 TabSectionIcon="Icon",
 
 SectionIcon="Icon",
@@ -4190,161 +4185,6 @@ local ab=a.load'd'
 local ac=ab.New
 local ad=ab.Tween
 
-
-function aa.New(ae,af,ag,ah,ai,aj)
-local ak={
-Container=nil,
-TooltipSize=16,
-
-TooltipArrowSizeX=ai=="Small"and 16 or 24,
-TooltipArrowSizeY=ai=="Small"and 6 or 9,
-
-PaddingX=ai=="Small"and 12 or 14,
-PaddingY=ai=="Small"and 7 or 9,
-
-Radius=999,
-
-TitleFrame=nil,
-}
-
-ah=ah or""
-aj=aj~=false
-
-local al=ac("TextLabel",{
-AutomaticSize="XY",
-TextWrapped=aj,
-BackgroundTransparency=1,
-FontFace=Font.new(ab.Font,Enum.FontWeight.Medium),
-Text=ae,
-TextSize=ai=="Small"and 15 or 17,
-TextTransparency=1,
-ThemeTag={
-TextColor3="Tooltip"..ah.."Text",
-}
-})
-
-ak.TitleFrame=al
-
-local am=ac("UIScale",{
-Scale=.9
-})
-
-local an=ac("Frame",{
-AnchorPoint=Vector2.new(0.5,0),
-AutomaticSize="XY",
-BackgroundTransparency=1,
-Parent=af,
-
-Visible=false
-},{
-ac("UISizeConstraint",{
-MaxSize=Vector2.new(400,math.huge)
-}),
-ac("Frame",{
-AutomaticSize="XY",
-BackgroundTransparency=1,
-LayoutOrder=99,
-Visible=ag,
-Name="Arrow",
-},{
-ac("ImageLabel",{
-Size=UDim2.new(0,ak.TooltipArrowSizeX,0,ak.TooltipArrowSizeY),
-BackgroundTransparency=1,
-
-Image="rbxassetid://105854070513330",
-ThemeTag={
-ImageColor3="Tooltip"..ah,
-},
-},{
-
-
-
-
-
-
-
-
-
-
-}),
-}),
-ab.NewRoundFrame(ak.Radius,"Squircle",{
-AutomaticSize="XY",
-ThemeTag={
-ImageColor3="Tooltip"..ah,
-},
-ImageTransparency=1,
-Name="Background",
-},{
-
-
-
-ac("Frame",{
-
-
-
-AutomaticSize="XY",
-BackgroundTransparency=1,
-},{
-ac("UICorner",{
-CornerRadius=UDim.new(0,16),
-}),
-ac("UIListLayout",{
-Padding=UDim.new(0,12),
-FillDirection="Horizontal",
-VerticalAlignment="Center"
-}),
-
-al,
-ac("UIPadding",{
-PaddingTop=UDim.new(0,ak.PaddingY),
-PaddingLeft=UDim.new(0,ak.PaddingX),
-PaddingRight=UDim.new(0,ak.PaddingX),
-PaddingBottom=UDim.new(0,ak.PaddingY),
-}),
-})
-}),
-am,
-ac("UIListLayout",{
-Padding=UDim.new(0,0),
-FillDirection="Vertical",
-VerticalAlignment="Center",
-HorizontalAlignment="Center",
-}),
-})
-ak.Container=an
-
-function ak.Open(ao)
-an.Visible=true
-
-
-ad(an.Background,.2,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(an.Arrow.ImageLabel,.2,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(al,.2,{TextTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(am,.22,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-end
-
-function ak.Close(ao,ap)
-
-ad(an.Background,.3,{ImageTransparency=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(an.Arrow.ImageLabel,.2,{ImageTransparency=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(al,.3,{TextTransparency=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(am,.35,{Scale=.9},Enum.EasingStyle.Quint,Enum.EasingDirection.In):Play()
-
-ap=ap~=false
-if ap then
-task.wait(.35)
-
-an.Visible=false
-an:Destroy()
-end
-end
-
-return ak
-end
-
-
-
 return aa end function a.C()
 game:GetService"ReplicatedStorage"
 local aa=a.load'd'
@@ -6081,18 +5921,6 @@ Visible=al.IsTextbox,
 })
 
 local ax
-if al.IsTooltip then
-ax=a.load'B'.New(
-ap,
-al.UIElements.SliderIcon.Frame.Thumb,
-true,
-"Secondary",
-"Small",
-false
-)
-ax.Container.AnchorPoint=Vector2.new(0.5,1)
-ax.Container.Position=UDim2.new(0.5,0,0,-8)
-end
 
 function al.Lock(ay)
 al.Locked=true
@@ -6143,9 +5971,6 @@ aA=math.clamp(aA,al.Value.Min or 0,al.Value.Max or 100)
 if aA~=aq then
 ag(al.UIElements.SliderIcon.Frame,0.05,{Size=UDim2.new(d,0,1,0)}):Play()
 al.UIElements.SliderContainer.TextBox.Text=FormatValue(aA)
-if ax then
-ax.TitleFrame.Text=FormatValue(aA)
-end
 al.Value.Default=FormatValue(aA)
 aq=aA
 ae.SafeCallback(al.Callback,FormatValue(aA))
@@ -6164,9 +5989,6 @@ aA=CalculateValue(al.Value.Min+g*(al.Value.Max-al.Value.Min))
 if aA~=aq then
 ag(al.UIElements.SliderIcon.Frame,0.05,{Size=UDim2.new(g,0,1,0)}):Play()
 al.UIElements.SliderContainer.TextBox.Text=FormatValue(aA)
-if ax then
-ax.TitleFrame.Text=FormatValue(aA)
-end
 al.Value.Default=FormatValue(aA)
 aq=aA
 ae.SafeCallback(al.Callback,FormatValue(aA))
@@ -6199,9 +6021,6 @@ ak.Window.NewElements and(al.ThumbSize+4)or(al.ThumbSize+2)
 ),
 },Enum.EasingStyle.Quint,Enum.EasingDirection.InOut):Play()
 end
-if ax then
-ax:Close(false)
-end
 end
 end)
 else
@@ -6217,9 +6036,6 @@ aA=CalculateValue(al.Value.Min+b*(al.Value.Max-al.Value.Min))
 if aA~=aq then
 ag(al.UIElements.SliderIcon.Frame,0.05,{Size=UDim2.new(b,0,1,0)}):Play()
 al.UIElements.SliderContainer.TextBox.Text=FormatValue(aA)
-if ax then
-ax.TitleFrame.Text=FormatValue(aA)
-end
 al.Value.Default=FormatValue(aA)
 aq=aA
 ae.SafeCallback(al.Callback,FormatValue(aA))
@@ -6294,9 +6110,6 @@ Size=UDim2.new(
 al.ThumbSize+8
 ),
 },Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-end
-if ax then
-ax:Open()
 end
 
 end
@@ -10333,7 +10146,6 @@ local ai=af.LocalPlayer:GetMouse()
 local ak=a.load'd'
 local al=ak.New
 
-local am=a.load'B'.New
 local an=a.load'x'.New
 
 
@@ -10345,7 +10157,6 @@ Tabs={},
 Containers={},
 SelectedTab=nil,
 TabCount=0,
-ToolTipParent=nil,
 TabHighlight=nil,
 
 OnChangeFunc=function(ao)end,
@@ -10354,7 +10165,6 @@ OnChangeFunc=function(ao)end,
 function ao.Init(ap,aq,ar,as)
 Window=ap
 WindUI=aq
-ao.ToolTipParent=ar
 ao.TabHighlight=as
 return ao
 end
@@ -10389,14 +10199,6 @@ TabPaddingY=3+(Window.UIPadding/2),
 TitlePaddingY=0,
 }
 
-
-
-
-
-
-
-
-
 if ar.IconShape then
 ar.TabPaddingX=2+(Window.UIPadding/4)
 ar.TabPaddingY=2+(Window.UIPadding/4)
@@ -10428,18 +10230,6 @@ Position=UDim2.new(0.5,0,0.5,0),
 ImageTransparency=1,
 Name="Outline",
 },{
-
-
-
-
-
-
-
-
-
-
-
-
 
 }),
 ak.NewRoundFrame(ar.UICorner,"Squircle",{
@@ -10475,7 +10265,6 @@ BackgroundTransparency=1,
 },{
 al("UIPadding",{
 PaddingTop=UDim.new(0,ar.TitlePaddingY),
-
 
 PaddingBottom=UDim.new(0,ar.TitlePaddingY),
 }),
@@ -10538,18 +10327,6 @@ Name="Outline",
 },
 {
 
-
-
-
-
-
-
-
-
-
-
-
-
 }
 ),
 }
@@ -10567,9 +10344,6 @@ ak.Image(ar.Icon,ar.Icon..":"..ar.Title,0,Window.Folder,ar.__type,true,ar.IconTh
 av.Size=UDim2.new(0,16,0,16)
 av.ImageLabel.ImageTransparency=not ar.Locked and 0 or 0.7
 at=-30
-
-
-
 
 end
 
@@ -10691,30 +10465,6 @@ local ax
 local ay
 local az=false
 
-
-if ar.Desc then
-ak.AddSignal(ar.UIElements.Main.InputBegan,function()
-az=true
-ax=task.spawn(function()
-task.wait(0.35)
-if az and not aw then
-aw=am(ar.Desc,ao.ToolTipParent,true)
-aw.Container.AnchorPoint=Vector2.new(0.5,0.5)
-
-local function updatePosition()
-if aw then
-aw.Container.Position=UDim2.new(0,ai.X,0,ai.Y-4)
-end
-end
-
-updatePosition()
-ay=ai.Move:Connect(updatePosition)
-aw:Open()
-end
-end)
-end)
-end
-
 ak.AddSignal(ar.UIElements.Main.MouseEnter,function()
 if not ar.Locked then
 ak.SetThemeTag(ar.UIElements.Main.Frame,{
@@ -10724,21 +10474,6 @@ ImageColor3="TabBackgroundHover",
 end
 end)
 ak.AddSignal(ar.UIElements.Main.InputEnded,function()
-if ar.Desc then
-az=false
-if ax then
-task.cancel(ax)
-ax=nil
-end
-if ay then
-ay:Disconnect()
-ay=nil
-end
-if aw then
-aw:Close()
-aw=nil
-end
-end
 
 if not ar.Locked then
 ak.SetThemeTag(ar.UIElements.Main.Frame,{
@@ -13177,7 +12912,6 @@ task.wait(0.4)
 av.WindUI.ScreenGui:Destroy()
 av.WindUI.NotificationGui:Destroy()
 av.WindUI.DropdownGui:Destroy()
-av.WindUI.TooltipGui:Destroy()
 
 an.DisconnectAll()
 
@@ -13333,7 +13067,7 @@ end
 
 local C=a.load'aa'
 local F=a.load'ab'
-local G=C.Init(aw,av.WindUI,av.WindUI.TooltipGui)
+local G=C.Init(aw,av.WindUI,nil)
 G:OnChange(function(H)
 aw.CurrentTab=H
 end)
@@ -13993,9 +13727,6 @@ Name="Window",
 at("Folder",{
 Name="Popups",
 }),
-at("Folder",{
-Name="ToolTips",
-}),
 })
 
 aa.NotificationGui=at("ScreenGui",{
@@ -14008,15 +13739,9 @@ Name="WindUI/Dropdowns",
 Parent=aw,
 IgnoreGuiInset=true,
 })
-aa.TooltipGui=at("ScreenGui",{
-Name="WindUI/Tooltips",
-Parent=aw,
-IgnoreGuiInset=true,
-})
 av(aa.ScreenGui)
 av(aa.NotificationGui)
 av(aa.DropdownGui)
-av(aa.TooltipGui)
 
 as.Init(aa)
 
@@ -14029,9 +13754,6 @@ aa.NotificationGui.Parent=az
 end
 if aa.DropdownGui then
 aa.DropdownGui.Parent=az
-end
-if aa.TooltipGui then
-aa.TooltipGui.Parent=az
 end
 end
 math.clamp(aa.TransparencyValue,0,1)
