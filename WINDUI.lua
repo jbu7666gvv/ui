@@ -10874,8 +10874,6 @@ ar:Open()
 end)
 end
 
-
-
 return ar
 end
 
@@ -11473,6 +11471,7 @@ Folder=av.Folder,
 Resizable=av.Resizable~=false,
 Background=av.Background,
 BackgroundImageTransparency=av.BackgroundImageTransparency or 0,
+BackgroundSigma=av.BackgroundSigma or nil,
 ShadowTransparency=av.ShadowTransparency or 0.6,
 User=av.User or{},
 Footer=av.Footer or{},
@@ -13872,6 +13871,195 @@ as.Themes=aa.Themes
 
 aa:SetTheme"Dark"
 
+do
+    local AssetService = game:GetService("AssetService")
+
+    local function boxesForGauss(sigma, n)
+        local wIdeal = math.sqrt((12 * sigma * sigma / n) + 1)
+        local wl = math.floor(wIdeal)
+        if wl % 2 == 0 then wl = wl - 1 end
+        if wl < 1 then wl = 1 end
+        local wu = wl + 2
+        local mIdeal = (12 * sigma * sigma - n * wl * wl - 4 * n * wl - 3 * n) / (-4 * wl - 4)
+        local m = math.floor(mIdeal + 0.5)
+        local sizes = table.create(n)
+        for i = 1, n do
+            sizes[i] = ((i - 1) < m) and wl or wu
+        end
+        return sizes
+    end
+
+    local function blurH(src, dst, w, h, r, step)
+        local maxR = math.floor((w - 1) / 2)
+        if r > maxR then r = maxR end
+        if r < 1 then
+            buffer.copy(dst, 0, src, 0, w * h * 4)
+            return
+        end
+        local iarr = 1 / (2 * r + 1)
+        local S = 4
+        local rowStride = w * S
+        for y = 0, h - 1 do
+            if y % step == 0 then task.wait() end
+            local row = y * rowStride
+            for c = 0, 3 do
+                local base = row + c
+                local val = (r + 1) * buffer.readu8(src, base)
+                for k = 1, r do
+                    val += buffer.readu8(src, base + k * S)
+                end
+                local ti = base
+                for i = 0, w - 1 do
+                    buffer.writeu8(dst, ti, math.floor(val * iarr + 0.5))
+                    ti += S
+                    if i == w - 1 then break end
+                    local addIdx = (i + 1 + r < w) and (i + 1 + r) or (w - 1)
+                    local remIdx = (i - r > 0) and (i - r) or 0
+                    val += buffer.readu8(src, base + addIdx * S)
+                         - buffer.readu8(src, base + remIdx * S)
+                end
+            end
+        end
+    end
+
+    local function blurV(src, dst, w, h, r, step)
+        local maxR = math.floor((h - 1) / 2)
+        if r > maxR then r = maxR end
+        if r < 1 then
+            buffer.copy(dst, 0, src, 0, w * h * 4)
+            return
+        end
+        local iarr = 1 / (2 * r + 1)
+        local S = 4
+        local RS = w * S
+        for x = 0, w - 1 do
+            if x % step == 0 then task.wait() end
+            local col = x * S
+            for c = 0, 3 do
+                local base = col + c
+                local val = (r + 1) * buffer.readu8(src, base)
+                for k = 1, r do
+                    val += buffer.readu8(src, base + k * RS)
+                end
+                local ti = base
+                for i = 0, h - 1 do
+                    buffer.writeu8(dst, ti, math.floor(val * iarr + 0.5))
+                    ti += RS
+                    if i == h - 1 then break end
+                    local addIdx = (i + 1 + r < h) and (i + 1 + r) or (h - 1)
+                    local remIdx = (i - r > 0) and (i - r) or 0
+                    val += buffer.readu8(src, base + addIdx * RS)
+                         - buffer.readu8(src, base + remIdx * RS)
+                end
+            end
+        end
+    end
+
+    local function gaussBlur(data, w, h, sigma, step)
+        if sigma <= 0.5 then return data end
+        local boxes = boxesForGauss(sigma, 3)
+        local a = data
+        local b = buffer.create(w * h * 4)
+        for i = 1, #boxes do
+            local r = math.floor((boxes[i] - 1) / 2)
+            if r >= 1 then
+                blurH(a, b, w, h, r, step)
+                blurV(b, a, w, h, r, step)
+            end
+        end
+        return a
+    end
+
+    local function downscaleBuffer(src, w, h, ds, step)
+        if ds <= 1 then return src, w, h end
+        local sw, sh = math.floor(w / ds), math.floor(h / ds)
+        local out = buffer.create(sw * sh * 4)
+        local area = ds * ds
+        for y = 0, sh - 1 do
+            if y % step == 0 then task.wait() end
+            for x = 0, sw - 1 do
+                local r, g, b, a = 0, 0, 0, 0
+                for dy = 0, ds - 1 do
+                    for dx = 0, ds - 1 do
+                        local o = (((y * ds + dy) * w + (x * ds + dx)) * 4)
+                        r += buffer.readu8(src, o)
+                        g += buffer.readu8(src, o + 1)
+                        b += buffer.readu8(src, o + 2)
+                        a += buffer.readu8(src, o + 3)
+                    end
+                end
+                local o = ((y * sw + x) * 4)
+                buffer.writeu8(out, o,     r // area)
+                buffer.writeu8(out, o + 1, g // area)
+                buffer.writeu8(out, o + 2, b // area)
+                buffer.writeu8(out, o + 3, a // area)
+            end
+        end
+        return out, sw, sh
+    end
+
+    local function upscaleBuffer(src, sw, sh, dw, dh, step)
+        if sw == dw and sh == dh then return src end
+        local out = buffer.create(dw * dh * 4)
+        for y = 0, dh - 1 do
+            if y % step == 0 then task.wait() end
+            local sy = math.min(sh - 1, math.floor(y * sh / dh))
+            local srcRow = sy * sw * 4
+            local dstRow = y  * dw * 4
+            for x = 0, dw - 1 do
+                local sx = math.min(sw - 1, math.floor(x * sw / dw))
+                local so = srcRow + sx * 4
+                local do_ = dstRow + x * 4
+                buffer.copy(out, do_, src, so, 4)
+            end
+        end
+        return out
+    end
+
+    local function blurEditableImage(src, sigma, ds, step)
+        local W, H = src.Size.X, src.Size.Y
+        local buf = src:ReadPixelsBuffer(Vector2.zero, src.Size)
+        local smallBuf, SW, SH = downscaleBuffer(buf, W, H, ds, step)
+        local out = gaussBlur(smallBuf, SW, SH, sigma, step)
+        local finalBuf = upscaleBuffer(out, SW, SH, W, H, step)
+        src:WritePixelsBuffer(Vector2.zero, src.Size, finalBuf)
+    end
+
+    function aa.BlurBackground(az)
+        if not aa.Window then return end
+
+        local sigma = aa.Window.BackgroundSigma
+        if not sigma or sigma <= 0 then return end
+
+        local bg = aa.Window.UIElements.Main.Background
+        local imgLabel = bg:FindFirstChild("Background", true)
+        if not imgLabel or not imgLabel:IsA("ImageLabel") then
+            warn("[WindUI Blur] 找不到背景 ImageLabel")
+            return
+        end
+
+        local downscale = 3
+        local step = 24
+
+        task.spawn(function()
+            local ok, editable = pcall(function()
+                return AssetService:CreateEditableImageAsync(
+                    Content.fromUri(imgLabel.Image)
+                )
+            end)
+            if not ok or not editable then
+                warn("[WindUI Blur] 加载失败:", editable)
+                return
+            end
+
+            blurEditableImage(editable, sigma, downscale, step)
+
+            imgLabel.Image = ""
+            imgLabel.ImageContent = Content.fromObject(editable)
+        end)
+    end
+end
+
 function aa.CreateWindow(az,aA)
 local aB=a.load'ae'
 
@@ -13915,6 +14103,42 @@ local h=aB(aA)
 aa.Transparent=aA.Transparent
 aa.Window=h
 
+if aA.BackgroundSigma and aA.BackgroundSigma > 0 then
+    task.spawn(function()
+        local bg = h.UIElements.Main.Background
+        local imgLabel = bg:FindFirstChild("Background", true)
+
+        if not imgLabel then
+            aa.BlurBackground()
+            return
+        end
+
+        local function isReady()
+            return imgLabel.IsLoaded and imgLabel.Image ~= ""
+        end
+
+        if isReady() then
+            aa.BlurBackground()
+            return
+        end
+
+        local done = false
+        local conn1, conn2
+
+        local function onReady()
+            if done then return end
+            if isReady() then
+                done = true
+                if conn1 then conn1:Disconnect() end
+                if conn2 then conn2:Disconnect() end
+                aa.BlurBackground()
+            end
+        end
+
+        conn1 = imgLabel:GetPropertyChangedSignal("IsLoaded"):Connect(onReady)
+        conn2 = imgLabel:GetPropertyChangedSignal("Image"):Connect(onReady)
+    end)
+end
 
 return h
 end
