@@ -14032,11 +14032,11 @@ do
         if not sigma or sigma <= 0 then return end
 
         local bg = aa.Window.UIElements.Main.Background
-        local imgLabel = bg:FindFirstChild("Background", true)
-        if not imgLabel or not imgLabel:IsA("ImageLabel") then
-            warn("[WindUI Blur] 找不到背景 ImageLabel")
-            return
-        end
+local imgLabel = bg:FindFirstChildOfClass("ImageLabel")
+if not imgLabel then
+    warn("[WindUI Blur] 找不到背景 ImageLabel")
+    return
+end
 
         local downscale = 3
         local step = 24
