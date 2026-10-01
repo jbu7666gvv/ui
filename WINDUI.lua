@@ -597,7 +597,6 @@ end)
 local d=b(game:GetService"RunService")
 local e=b(game:GetService"UserInputService")
 local f=b(game:GetService"TweenService")
-local g=b(game:GetService"LocalizationService")
 local h=b(game:GetService"HttpService")
 
 local i=a.load'a'local j=
@@ -829,17 +828,14 @@ local CustomFont = CustomFontResolution.Value
 local r
 r={
 Font = CustomFontResolution.AssetId or "CustomFont",
-Localization=nil,
 CanDraggable=true,
 Theme=nil,
 Themes=nil,
 Icons=m,
 Signals={},
 Objects={},
-LocalizationObjects={},
 UIScale=1,
 FontObjects={},
-Language=string.match(g.SystemLocaleId,"^[a-z]+"),
 Request=http_request or(syn and syn.request)or request,
 DefaultProperties={
 ScreenGui={
