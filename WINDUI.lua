@@ -14162,7 +14162,7 @@ do
             return
         end
 
-        local DOWNSCALE = 4
+        local DOWNSCALE = (sigma <= 2) and 3 or 4
         local STEP = 39
 
         task.spawn(function()
