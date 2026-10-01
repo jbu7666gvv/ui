@@ -13896,29 +13896,76 @@ do
             buffer.copy(dst, 0, src, 0, w * h * 4)
             return
         end
+
         local iarr = 1 / (2 * r + 1)
-        local S = 4
-        local rowStride = w * S
+        local rowStride = w * 4
+        local midStart = r
+        local midEnd   = w - r - 2
+        local lastColOff = (w - 1) * 4
+
         for y = 0, h - 1 do
             if y % step == 0 then task.wait() end
-            local row = y * rowStride
-            for c = 0, 3 do
-                local base = row + c
-                local val = (r + 1) * buffer.readu8(src, base)
-                for k = 1, r do
-                    val += buffer.readu8(src, base + k * S)
-                end
-                local ti = base
-                for i = 0, w - 1 do
-                    buffer.writeu8(dst, ti, math.floor(val * iarr + 0.5))
-                    ti += S
-                    if i == w - 1 then break end
-                    local addIdx = (i + 1 + r < w) and (i + 1 + r) or (w - 1)
-                    local remIdx = (i - r > 0) and (i - r) or 0
-                    val += buffer.readu8(src, base + addIdx * S)
-                         - buffer.readu8(src, base + remIdx * S)
-                end
+            local base = y * rowStride
+
+            local vr = (r + 1) * buffer.readu8(src, base)
+            local vg = (r + 1) * buffer.readu8(src, base + 1)
+            local vb = (r + 1) * buffer.readu8(src, base + 2)
+            local va = (r + 1) * buffer.readu8(src, base + 3)
+            for k = 1, r do
+                local o = base + k * 4
+                vr += buffer.readu8(src, o)
+                vg += buffer.readu8(src, o + 1)
+                vb += buffer.readu8(src, o + 2)
+                va += buffer.readu8(src, o + 3)
             end
+
+            local ti = base
+
+            for i = 0, midStart - 1 do
+                buffer.writeu8(dst, ti,     vr * iarr + 0.5)
+                buffer.writeu8(dst, ti + 1, vg * iarr + 0.5)
+                buffer.writeu8(dst, ti + 2, vb * iarr + 0.5)
+                buffer.writeu8(dst, ti + 3, va * iarr + 0.5)
+                ti += 4
+                local ao = base + (i + 1 + r) * 4
+                vr += buffer.readu8(src, ao)     - buffer.readu8(src, base)
+                vg += buffer.readu8(src, ao + 1) - buffer.readu8(src, base + 1)
+                vb += buffer.readu8(src, ao + 2) - buffer.readu8(src, base + 2)
+                va += buffer.readu8(src, ao + 3) - buffer.readu8(src, base + 3)
+            end
+
+            for i = midStart, midEnd do
+                buffer.writeu8(dst, ti,     vr * iarr + 0.5)
+                buffer.writeu8(dst, ti + 1, vg * iarr + 0.5)
+                buffer.writeu8(dst, ti + 2, vb * iarr + 0.5)
+                buffer.writeu8(dst, ti + 3, va * iarr + 0.5)
+                ti += 4
+                local ao = base + (i + 1 + r) * 4
+                local ro = base + (i - r) * 4
+                vr += buffer.readu8(src, ao)     - buffer.readu8(src, ro)
+                vg += buffer.readu8(src, ao + 1) - buffer.readu8(src, ro + 1)
+                vb += buffer.readu8(src, ao + 2) - buffer.readu8(src, ro + 2)
+                va += buffer.readu8(src, ao + 3) - buffer.readu8(src, ro + 3)
+            end
+
+            local lo = base + lastColOff
+            for i = midEnd + 1, w - 2 do
+                buffer.writeu8(dst, ti,     vr * iarr + 0.5)
+                buffer.writeu8(dst, ti + 1, vg * iarr + 0.5)
+                buffer.writeu8(dst, ti + 2, vb * iarr + 0.5)
+                buffer.writeu8(dst, ti + 3, va * iarr + 0.5)
+                ti += 4
+                local ro = base + (i - r) * 4
+                vr += buffer.readu8(src, lo)     - buffer.readu8(src, ro)
+                vg += buffer.readu8(src, lo + 1) - buffer.readu8(src, ro + 1)
+                vb += buffer.readu8(src, lo + 2) - buffer.readu8(src, ro + 2)
+                va += buffer.readu8(src, lo + 3) - buffer.readu8(src, ro + 3)
+            end
+
+            buffer.writeu8(dst, ti,     vr * iarr + 0.5)
+            buffer.writeu8(dst, ti + 1, vg * iarr + 0.5)
+            buffer.writeu8(dst, ti + 2, vb * iarr + 0.5)
+            buffer.writeu8(dst, ti + 3, va * iarr + 0.5)
         end
     end
 
@@ -13929,29 +13976,76 @@ do
             buffer.copy(dst, 0, src, 0, w * h * 4)
             return
         end
+
         local iarr = 1 / (2 * r + 1)
-        local S = 4
-        local RS = w * S
+        local RS = w * 4
+        local midStart = r
+        local midEnd   = h - r - 2
+        local lastRowOff = (h - 1) * RS
+
         for x = 0, w - 1 do
             if x % step == 0 then task.wait() end
-            local col = x * S
-            for c = 0, 3 do
-                local base = col + c
-                local val = (r + 1) * buffer.readu8(src, base)
-                for k = 1, r do
-                    val += buffer.readu8(src, base + k * RS)
-                end
-                local ti = base
-                for i = 0, h - 1 do
-                    buffer.writeu8(dst, ti, math.floor(val * iarr + 0.5))
-                    ti += RS
-                    if i == h - 1 then break end
-                    local addIdx = (i + 1 + r < h) and (i + 1 + r) or (h - 1)
-                    local remIdx = (i - r > 0) and (i - r) or 0
-                    val += buffer.readu8(src, base + addIdx * RS)
-                         - buffer.readu8(src, base + remIdx * RS)
-                end
+            local base = x * 4
+
+            local vr = (r + 1) * buffer.readu8(src, base)
+            local vg = (r + 1) * buffer.readu8(src, base + 1)
+            local vb = (r + 1) * buffer.readu8(src, base + 2)
+            local va = (r + 1) * buffer.readu8(src, base + 3)
+            for k = 1, r do
+                local o = base + k * RS
+                vr += buffer.readu8(src, o)
+                vg += buffer.readu8(src, o + 1)
+                vb += buffer.readu8(src, o + 2)
+                va += buffer.readu8(src, o + 3)
             end
+
+            local ti = base
+
+            for i = 0, midStart - 1 do
+                buffer.writeu8(dst, ti,     vr * iarr + 0.5)
+                buffer.writeu8(dst, ti + 1, vg * iarr + 0.5)
+                buffer.writeu8(dst, ti + 2, vb * iarr + 0.5)
+                buffer.writeu8(dst, ti + 3, va * iarr + 0.5)
+                ti += RS
+                local ao = base + (i + 1 + r) * RS
+                vr += buffer.readu8(src, ao)     - buffer.readu8(src, base)
+                vg += buffer.readu8(src, ao + 1) - buffer.readu8(src, base + 1)
+                vb += buffer.readu8(src, ao + 2) - buffer.readu8(src, base + 2)
+                va += buffer.readu8(src, ao + 3) - buffer.readu8(src, base + 3)
+            end
+
+            for i = midStart, midEnd do
+                buffer.writeu8(dst, ti,     vr * iarr + 0.5)
+                buffer.writeu8(dst, ti + 1, vg * iarr + 0.5)
+                buffer.writeu8(dst, ti + 2, vb * iarr + 0.5)
+                buffer.writeu8(dst, ti + 3, va * iarr + 0.5)
+                ti += RS
+                local ao = base + (i + 1 + r) * RS
+                local ro = base + (i - r) * RS
+                vr += buffer.readu8(src, ao)     - buffer.readu8(src, ro)
+                vg += buffer.readu8(src, ao + 1) - buffer.readu8(src, ro + 1)
+                vb += buffer.readu8(src, ao + 2) - buffer.readu8(src, ro + 2)
+                va += buffer.readu8(src, ao + 3) - buffer.readu8(src, ro + 3)
+            end
+
+            local lo = base + lastRowOff
+            for i = midEnd + 1, h - 2 do
+                buffer.writeu8(dst, ti,     vr * iarr + 0.5)
+                buffer.writeu8(dst, ti + 1, vg * iarr + 0.5)
+                buffer.writeu8(dst, ti + 2, vb * iarr + 0.5)
+                buffer.writeu8(dst, ti + 3, va * iarr + 0.5)
+                ti += RS
+                local ro = base + (i - r) * RS
+                vr += buffer.readu8(src, lo)     - buffer.readu8(src, ro)
+                vg += buffer.readu8(src, lo + 1) - buffer.readu8(src, ro + 1)
+                vb += buffer.readu8(src, lo + 2) - buffer.readu8(src, ro + 2)
+                va += buffer.readu8(src, lo + 3) - buffer.readu8(src, ro + 3)
+            end
+
+            buffer.writeu8(dst, ti,     vr * iarr + 0.5)
+            buffer.writeu8(dst, ti + 1, vg * iarr + 0.5)
+            buffer.writeu8(dst, ti + 2, vb * iarr + 0.5)
+            buffer.writeu8(dst, ti + 3, va * iarr + 0.5)
         end
     end
 
@@ -14001,6 +14095,38 @@ do
     local function upscaleBuffer(src, sw, sh, dw, dh, step)
         if sw == dw and sh == dh then return src end
         local out = buffer.create(dw * dh * 4)
+
+        if dw % sw == 0 and dh % sh == 0 then
+            local fx = dw // sw
+            local fy = dh // sh
+            local srcStride = sw * 4
+            local dstStride = dw * 4
+
+            local rowBuf = buffer.create(dstStride)
+
+            for sy = 0, sh - 1 do
+                if sy % step == 0 then task.wait() end
+                local srcRow = sy * srcStride
+
+                local ti = 0
+                for sx = 0, sw - 1 do
+                    local so = srcRow + sx * 4
+                    buffer.copy(rowBuf, ti, src, so, 4)
+                    ti += 4
+                    for k = 2, fx do
+                        buffer.copy(rowBuf, ti, rowBuf, ti - 4, 4)
+                        ti += 4
+                    end
+                end
+
+                for ky = 0, fy - 1 do
+                    local dstY = sy * fy + ky
+                    buffer.copy(out, dstY * dstStride, rowBuf, 0, dstStride)
+                end
+            end
+            return out
+        end
+
         for y = 0, dh - 1 do
             if y % step == 0 then task.wait() end
             local sy = math.min(sh - 1, math.floor(y * sh / dh))
@@ -14008,9 +14134,7 @@ do
             local dstRow = y  * dw * 4
             for x = 0, dw - 1 do
                 local sx = math.min(sw - 1, math.floor(x * sw / dw))
-                local so = srcRow + sx * 4
-                local do_ = dstRow + x * 4
-                buffer.copy(out, do_, src, so, 4)
+                buffer.copy(out, dstRow + x * 4, src, srcRow + sx * 4, 4)
             end
         end
         return out
@@ -14032,14 +14156,14 @@ do
         if not sigma or sigma <= 0 then return end
 
         local bg = aa.Window.UIElements.Main.Background
-local imgLabel = bg:FindFirstChildOfClass("ImageLabel")
-if not imgLabel then
-    warn("[WindUI Blur] 找不到背景 ImageLabel")
-    return
-end
+        local imgLabel = bg:FindFirstChildOfClass("ImageLabel")
+        if not imgLabel then
+            warn("[WindUI Blur] 找不到背景 ImageLabel")
+            return
+        end
 
-        local downscale = 3
-        local step = 24
+        local DOWNSCALE = 4
+        local STEP = 39
 
         task.spawn(function()
             local ok, editable = pcall(function()
@@ -14052,7 +14176,7 @@ end
                 return
             end
 
-            blurEditableImage(editable, sigma, downscale, step)
+            blurEditableImage(editable, sigma, DOWNSCALE, STEP)
 
             imgLabel.Image = ""
             imgLabel.ImageContent = Content.fromObject(editable)
