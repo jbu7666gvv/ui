@@ -4156,14 +4156,9 @@ an.TextButton.UIPadding.PaddingLeft=UDim.new(0,11)
 an.TextButton.UIPadding.PaddingRight=UDim.new(0,11)
 end
 
-
-
-
-
 if ai then
 if ar.Title then
 ai.Text=ar.Title
-ab:ChangeTranslationKey(ai,ar.Title)
 elseif ar.Title==nil then
 
 end
@@ -4187,8 +4182,6 @@ end
 
 return ag
 end
-
-
 
 return aa end function a.B()
 local aa={}
@@ -9467,13 +9460,6 @@ for aw,ax in next,an.Elements do
 ax:Destroy()
 end
 
-
-
-
-
-
-
-
 at:Destroy()
 end
 
@@ -13898,7 +13884,6 @@ local aa={
 Window=nil,
 Theme=nil,
 Creator=a.load'd',
-LocalizationModule=a.load'e',
 NotificationModule=a.load'f',
 Themes=nil,
 Transparent=false,
@@ -14103,16 +14088,6 @@ end
 function aa.GetWindowSize(az)
 return aa.Window.UIElements.Main.Size
 end
-function aa.Localization(az,aA)
-return aa.LocalizationModule:New(aA,as)
-end
-
-function aa.SetLanguage(az,aA)
-if as.Localization then
-return as.SetLanguage(aA)
-end
-return false
-end
 
 function aa.ToggleAcrylic(az,aA)
 end
@@ -14174,7 +14149,6 @@ aa.Themes=a.load'v'(aa,as)
 as.Themes=aa.Themes
 
 aa:SetTheme"Dark"
-aa:SetLanguage(as.Language)
 
 function aa.CreateWindow(az,aA)
 local aB=a.load'ae'
