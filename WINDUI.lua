@@ -1636,7 +1636,15 @@ if F==nil then
 return true
 end
 local G=F.__type
-return G=="Divider"or G=="Space"or G=="Section"
+-- [PATCH] 容器元素也算分隔符：否则"两个 HStack + 一个普通按钮"时，
+-- 普通按钮会被算成第 3 个 → 只有下边两个角圆
+if G=="Divider"or G=="Space"or G=="Section"
+or G=="HStack"or G=="Group"or G=="VStack"then
+return true
+end
+-- [PATCH] 没有 ElementFrame 的元素（Image 元素）也当分隔符，
+-- 否则它会让旁边那个按钮只圆一侧
+return F.ElementFrame==nil
 end
 
 if isDelimiter(z[A])then
@@ -4880,10 +4888,13 @@ end
 
 function ah.UpdateShape(g)
 if ag.Window.NewElements then
+-- [PATCH] 用元素自己的容器（Tab / HStack / Group / VStack），
+-- 不能用传进来的 g：Tab 级刷新时 g 是 Tab 表，里面混着 HStack 的子控件，索引会算错
+local _c=ag.ParentTable or g
 local h=aa:GetElementPosition(
-g.Elements,
+_c.Elements or g.Elements,
 ah.Index,
-ag.ParentConfig.ParentTable.__type=="HStack"or ag.ParentConfig.ParentTable.__type=="Group"
+_c.__type=="HStack"or _c.__type=="Group"
 )
 
 if h and d then
@@ -6716,7 +6727,7 @@ local af={}
 
 function af.New(ag,ah)
 local ai=ae("Frame",{
-Size=ah.ParentType~="Group"and UDim2.new(1,0,0,1)or UDim2.new(0,1,1,0),
+Size=not(ah.ParentType=="Group"or ah.ParentType=="HStack")and UDim2.new(1,0,0,1)or UDim2.new(0,1,1,0),
 Position=UDim2.new(0.5,0,0.5,0),
 AnchorPoint=Vector2.new(0.5,0.5),
 BackgroundTransparency=.9,
@@ -6726,11 +6737,33 @@ BackgroundColor3="Text"
 })
 local aj=ae("Frame",{
 Parent=ah.Parent,
-Size=ah.ParentType~="Group"and UDim2.new(1,-7,0,7)or UDim2.new(0,7,1,-7),
+Size=not(ah.ParentType=="Group"or ah.ParentType=="HStack")and UDim2.new(1,-7,0,7)or UDim2.new(0,7,0,0),
 BackgroundTransparency=1,
 },{
 ai
 })
+
+-- [PATCH] 横排容器里竖线要有高度，但 HStack 是 AutomaticSize=Y，
+-- 用 UDim2.new(0,7,1,-7) 会形成循环依赖（实测行高 53→127 一直涨）。
+-- 所以给它一个"当行行高"的固定高度。
+if ah.ParentType=="Group"or ah.ParentType=="HStack"then
+task.defer(function()
+local aq=ah.Parent
+if not aq then return end
+-- 用"当前"UIScale（窗口有开场缩放动画，不能直接用配置值）
+local as=ah.Window and ah.Window.WindUI and ah.Window.WindUI.UIScaleObj
+local ar=(as and as.Scale)or ah.UIScale or 1
+local at=0
+for au,av in next,aq:GetChildren()do
+if av~=aj and av:IsA("GuiObject")then
+at=math.max(at,av.AbsoluteSize.Y)
+end
+end
+if at>0 then
+aj.Size=UDim2.new(0,7,0,math.max(8,at/ar-4))
+end
+end)
+end
 
 return"Divider",{__type="Divider",ElementFrame=aj}
 end
@@ -8117,16 +8150,18 @@ end
 
 function am.UpdateShape(ap)
 if al.Window.NewElements then
+-- [PATCH] 同 P1
+local _c=al.ParentTable or ap
 local aq=aa:GetElementPosition(
-ap.Elements,
+_c.Elements or ap.Elements,
 am.Index,
-al.ParentType=="HStack"or al.ParentType=="Group"
+_c.__type=="HStack"or _c.__type=="Group"
 )
 
 if aq and ao.CodeFrameModule then
 ao.CodeFrameModule:SetType(aq)
 
-print(aq)
+-- [PATCH] 删掉遗留的调试 print(aq)
 ao.TopbarFrameModule:SetType(
 table.find({"Squircle-BL-BR","SquircleH-BL-BR"},aq)~=nil and"Square"or aq
 )
@@ -10084,16 +10119,28 @@ end
 function av.Destroy(ax)
 aw:Destroy()
 
-table.remove(ak.AllElements,at.GlobalIndex)
-table.remove(aa.Elements,at.Index)
-table.remove(ap.Elements,at.Index)
+-- [PATCH] 原来的 table.remove(t, at.Index) 用创建时的下标，增删后删错对象/留空洞
+local function _rm(t,v)
+if not t then return end
+for i=#t,1,-1 do
+if t[i]==v then table.remove(t,i) end
+end
+end
+_rm(ak.AllElements,av)
+_rm(aa.Elements,av)
+if ap then _rm(ap.Elements,av) end
 aa:UpdateAllElementShapes(aa)
+if ap and ap~=aa and ap.UpdateAllElementShapes then
+ap:UpdateAllElementShapes(ap)
+end
 end
 end
 
-ak.AllElements[at.Index]=av
+-- [PATCH] AllElements 是全局顺序表必须用 GlobalIndex；
+-- Tab 的 Elements 只装 Tab 自己的元素（别把 HStack 的子控件塞进去）
+ak.AllElements[at.GlobalIndex]=av
 aa.Elements[at.Index]=av
-if ap then
+if ap and ap==aa then
 ap.Elements[at.Index]=av
 end
 
